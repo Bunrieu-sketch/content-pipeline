@@ -3,122 +3,379 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Sponsor — Andrew's Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <title>Edit {{ sponsor.brand_name }} — Sponsor CRM</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text: #c9d1d9;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --border: #30363d;
+            --accent-purple: #a371f7;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container { max-width: 900px; margin: 0 auto; }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1 { font-size: 1.5rem; font-weight: 600; }
+
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-link:hover { color: var(--text); }
+
+        form {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .form-section {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .form-section:last-of-type { border-bottom: none; }
+
+        .section-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.4rem;
+        }
+
+        input, select, textarea {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.6rem 0.75rem;
+            color: var(--text);
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+        }
+
+        textarea { resize: vertical; min-height: 80px; }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn {
+            padding: 0.6rem 1.25rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-tertiary);
+            color: var(--text);
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .btn:hover { background: var(--bg); }
+
+        .btn-primary {
+            background: var(--accent-purple);
+            border-color: var(--accent-purple);
+            color: white;
+        }
+
+        .btn-primary:hover { background: #b083f8; border-color: #b083f8; }
+
+        .btn-danger {
+            background: var(--accent-red);
+            border-color: var(--accent-red);
+            color: white;
+            margin-left: auto;
+        }
+
+        .btn-danger:hover { background: #ff6b6b; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-inquiry { background: var(--bg-tertiary); color: var(--text-secondary); }
+        .status-negotiation { background: #3d3d1a; color: var(--accent-yellow); }
+        .status-contract { background: #1a3d4d; color: var(--accent-blue); }
+        .status-content { background: #2d1a3d; color: var(--accent-purple); }
+        .status-delivered { background: #1a3d3d; color: var(--accent-green); }
+        .status-live { background: #0d3d1a; color: var(--accent-green); }
+        .status-paid { background: #3d1a3d; color: var(--accent-purple); }
+    </style>
 </head>
 <body>
-    <nav class="nav">
-        <div class="nav-brand">🎬 Andrew's Dashboard</div>
-        <div class="nav-links">
-            <a href="/">Overview</a>
-            <a href="/videos">Videos</a>
-            <a href="/sponsors">Sponsors</a>
-            <a href="/calendar">Calendar</a>
+    <div class="container">
+        <div class="page-header">
+            <div>
+                <a href="/sponsors" class="back-link">← Back to Sponsors</a>
+                <h1>{{ sponsor.brand_name }}</h1>
+                <span class="status-badge status-{{ sponsor.status }}">{{ sponsor.status }}</span>
+            </div>
         </div>
-    </nav>
 
-    <main class="container">
-        <h1>💰 Edit Sponsor: {{ sponsor.brand_name }}</h1>
+        <form method="post" action="/api/sponsors/{{ sponsor.id }}?_method=PUT">
+            <!-- Basic Info -->
+            <div class="form-section">
+                <div class="section-title">Basic Information</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="brand_name">Brand Name *</label>
+                        <input type="text" id="brand_name" name="brand_name" value="{{ sponsor.brand_name }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select id="status" name="status">
+                            {% for stage in stages %}
+                            <option value="{{ stage }}" {{ 'selected' if sponsor.status == stage else '' }}>{{ stage_labels[stage] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
 
-        <form action="/api/sponsors/{{ sponsor.id }}" method="post" class="edit-form">
-            <div class="form-grid">
-                <div>
-                    <label>Brand Name *</label>
-                    <input type="text" name="brand_name" value="{{ sponsor.brand_name }}" required>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="content_phase">Content Phase (if in Content stage)</label>
+                        <select id="content_phase" name="content_phase">
+                            <option value="">— None —</option>
+                            {% for phase in content_phases %}
+                            <option value="{{ phase }}" {{ 'selected' if sponsor.content_phase == phase else '' }}>{{ content_phase_labels[phase] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
-                
-                <div>
-                    <label>Status</label>
-                    <select name="status">
-                        {% for stage in stages %}
-                        <option value="{{ stage }}" {{ 'selected' if sponsor.status == stage else '' }}>{{ stage_labels[stage] }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div>
-                    <label>Contact Name</label>
-                    <input type="text" name="contact_name" value="{{ sponsor.contact_name or '' }}">
-                </div>
-                
-                <div>
-                    <label>Contact Email</label>
-                    <input type="email" name="contact_email" value="{{ sponsor.contact_email or '' }}">
-                </div>
-                
-                <div>
-                    <label>Deal Type</label>
-                    <select name="deal_type">
-                        <option value="flat_rate" {{ 'selected' if sponsor.deal_type == 'flat_rate' else '' }}>Flat Rate</option>
-                        <option value="cpm" {{ 'selected' if sponsor.deal_type == 'cpm' else '' }}>CPM</option>
-                    </select>
-                </div>
-                
-                <div>
-                    <label>Deal Value ($)</label>
-                    <input type="number" name="deal_value" value="{{ sponsor.deal_value or '' }}">
-                </div>
-                
-                <div>
-                    <label>Script Due</label>
-                    <input type="date" name="script_due" value="{{ sponsor.script_due or '' }}">
-                </div>
-                
-                <div>
-                    <label>Record Date</label>
-                    <input type="date" name="record_date" value="{{ sponsor.record_date or '' }}">
-                </div>
-                
-                <div>
-                    <label>Brand Approval Deadline</label>
-                    <input type="date" name="brand_approval_deadline" value="{{ sponsor.brand_approval_deadline or '' }}">
-                </div>
-                
-                <div>
-                    <label>Go Live Date</label>
-                    <input type="date" name="live_date" value="{{ sponsor.live_date or '' }}">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="deal_value">Deal Value ($)</label>
+                        <input type="number" id="deal_value" name="deal_value" value="{{ sponsor.deal_value or '' }}" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="deal_type">Deal Type</label>
+                        <select id="deal_type" name="deal_type">
+                            <option value="flat_rate" {{ 'selected' if sponsor.deal_type == 'flat_rate' else '' }}>Flat Rate</option>
+                            <option value="cpm" {{ 'selected' if sponsor.deal_type == 'cpm' else '' }}>CPM</option>
+                        </select>
+                    </div>
                 </div>
             </div>
-            
-            <label>Notes</label>
-            <textarea name="notes" rows="5">{{ sponsor.notes or '' }}</textarea>
-            
-            <!-- Invoice Section -->
-            {% if sponsor.status in ['live', 'invoiced'] %}
-            <hr>
-            <h3>💰 Invoice Details</h3>
-            <div class="form-grid">
-                <div>
-                    <label>Invoice Status</label>
-                    <select name="invoice_status">
-                        <option value="not_due" {{ 'selected' if sponsor.invoice_status == 'not_due' else '' }}>Not Due</option>
-                        <option value="pending" {{ 'selected' if sponsor.invoice_status == 'pending' else '' }}>Pending</option>
-                        <option value="sent" {{ 'selected' if sponsor.invoice_status == 'sent' else '' }}>Sent</option>
-                        <option value="paid" {{ 'selected' if sponsor.invoice_status == 'paid' else '' }}>Paid</option>
-                    </select>
+
+            <!-- Contact Info -->
+            <div class="form-section">
+                <div class="section-title">Contact Information</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="contact_name">Contact Name</label>
+                        <input type="text" id="contact_name" name="contact_name" value="{{ sponsor.contact_name or '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="contact_email">Contact Email</label>
+                        <input type="email" id="contact_email" name="contact_email" value="{{ sponsor.contact_email or '' }}">
+                    </div>
                 </div>
-                
-                <div>
-                    <label>Invoice Amount ($)</label>
-                    <input type="number" name="invoice_amount" value="{{ sponsor.invoice_amount or '' }}">
-                </div>
-                
-                <div>
-                    <label>Views at 30 Days (for CPM)</label>
-                    <input type="number" name="views_at_30_days" value="{{ sponsor.views_at_30_days or '' }}">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="last_contact_date">Last Contact Date</label>
+                        <input type="date" id="last_contact_date" name="last_contact_date" value="{{ sponsor.last_contact_date or '' }}">
+                    </div>
                 </div>
             </div>
-            {% endif %}
-            
+
+            <!-- Timeline -->
+            <div class="form-section">
+                <div class="section-title">Timeline</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="brief_due">Brief Due</label>
+                        <input type="date" id="brief_due" name="brief_due" value="{{ sponsor.brief_due or '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="script_due">Script Due</label>
+                        <input type="date" id="script_due" name="script_due" value="{{ sponsor.script_due or '' }}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="record_date">Record Date</label>
+                        <input type="date" id="record_date" name="record_date" value="{{ sponsor.record_date or '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="brand_approval_deadline">Brand Approval Deadline</label>
+                        <input type="date" id="brand_approval_deadline" name="brand_approval_deadline" value="{{ sponsor.brand_approval_deadline or '' }}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="live_date">Go Live Date</label>
+                        <input type="date" id="live_date" name="live_date" value="{{ sponsor.live_date or '' }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deliverables & Next Actions -->
+            <div class="form-section">
+                <div class="section-title">Deliverables & Actions</div>
+                
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="deliverables">Deliverables</label>
+                    <textarea id="deliverables" name="deliverables" rows="2">{{ sponsor.deliverables or '' }}</textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="next_action">Next Action</label>
+                        <input type="text" id="next_action" name="next_action" value="{{ sponsor.next_action or '' }}" placeholder="e.g., FOLLOW UP: waiting for brief">
+                    </div>
+                    <div class="form-group">
+                        <label for="next_action_due">Next Action Due</label>
+                        <input type="date" id="next_action_due" name="next_action_due" value="{{ sponsor.next_action_due or '' }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Document Links -->
+            <div class="form-section">
+                <div class="section-title">Document Links (Google Drive)</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="contract_link">Contract URL</label>
+                        <input type="url" id="contract_link" name="contract_link" value="{{ sponsor.contract_link or '' }}" placeholder="https://drive.google.com/...">
+                    </div>
+                    <div class="form-group">
+                        <label for="brief_link">Brief URL</label>
+                        <input type="url" id="brief_link" name="brief_link" value="{{ sponsor.brief_link or '' }}" placeholder="https://drive.google.com/...">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="script_link">Script URL</label>
+                        <input type="url" id="script_link" name="script_link" value="{{ sponsor.script_link or '' }}" placeholder="https://docs.google.com/...">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live & Payment Tracking -->
+            <div class="form-section">
+                <div class="section-title">Live & Payment Tracking</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="youtube_video_id">YouTube Video ID</label>
+                        <input type="text" id="youtube_video_id" name="youtube_video_id" value="{{ sponsor.youtube_video_id or '' }}" placeholder="e.g., dQw4w9WgXcQ">
+                    </div>
+                    <div class="form-group">
+                        <label for="youtube_video_title">Video Title</label>
+                        <input type="text" id="youtube_video_title" name="youtube_video_title" value="{{ sponsor.youtube_video_title or '' }}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="payment_terms_days">Payment Terms (days)</label>
+                        <input type="number" id="payment_terms_days" name="payment_terms_days" value="{{ sponsor.payment_terms_days or 30 }}" min="0" max="90">
+                    </div>
+                    <div class="form-group">
+                        <label for="invoice_generated_date">Invoice Generated</label>
+                        <input type="date" id="invoice_generated_date" name="invoice_generated_date" value="{{ sponsor.invoice_generated_date or '' }}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="payment_due_date">Payment Due Date</label>
+                        <input type="date" id="payment_due_date" name="payment_due_date" value="{{ sponsor.payment_due_date or '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="payment_received_date">Payment Received</label>
+                        <input type="date" id="payment_received_date" name="payment_received_date" value="{{ sponsor.payment_received_date or '' }}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="views_at_30_days">Views at 30 Days (for CPM)</label>
+                        <input type="number" id="views_at_30_days" name="views_at_30_days" value="{{ sponsor.views_at_30_days or '' }}">
+                    </div>
+                </div>
+            </div>
+
             <div class="form-actions">
-                <a href="/sponsors" class="btn-secondary">Cancel</a>
-                <button type="submit" class="btn-primary">Save Changes</button>
+                <a href="/sponsors" class="btn">Cancel</a>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
             </div>
         </form>
 
-        <form action="/api/sponsors/{{ sponsor.id }}/delete" method="post" class="delete-form" onsubmit="return confirm('Delete {{ sponsor.brand_name }}?')">
-            <button type="submit" class="btn-danger">🗑️ Delete Sponsor</button>
+        <form method="post" action="/api/sponsors/{{ sponsor.id }}?_method=DELETE" style="margin-top: 1rem;" onsubmit="return confirm('Delete this sponsor? This cannot be undone.');">
+            <button type="submit" class="btn btn-danger">Delete Sponsor</button>
         </form>
-    </main>
+    </div>
 </body>
 </html>

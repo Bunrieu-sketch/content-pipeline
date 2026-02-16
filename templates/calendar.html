@@ -4,38 +4,237 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendar — Andrew's Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text: #c9d1d9;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --border: #30363d;
+            --accent-blue: #58a6ff;
+            --accent-purple: #a371f7;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1 { font-size: 1.5rem; font-weight: 600; }
+
+        .header-actions { display: flex; gap: 0.75rem; }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-tertiary);
+            color: var(--text);
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .btn:hover { background: var(--bg-secondary); }
+
+        .btn-primary {
+            background: var(--accent-purple);
+            border-color: var(--accent-purple);
+            color: white;
+        }
+
+        /* Calendar Legend */
+        .calendar-legend {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        .dot-video { background: var(--accent-blue); }
+        .dot-record { background: var(--accent-purple); }
+        .dot-live { background: var(--accent-red); }
+        .dot-script { background: var(--accent-yellow); }
+
+        /* Calendar View */
+        .calendar-view { display: grid; gap: 0.75rem; }
+
+        .calendar-day {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .calendar-day:hover {
+            border-color: var(--border-hover);
+        }
+
+        .calendar-day.past { opacity: 0.6; }
+        .calendar-day.today { 
+            border-color: var(--accent-purple);
+            background: #1a0f2e;
+        }
+        .calendar-day.upcoming-3 {
+            border-color: var(--accent-yellow);
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .day-date { 
+            font-weight: 600; 
+            font-size: 1rem;
+        }
+        .day-date.today-text { color: var(--accent-purple); }
+
+        .day-weekday { 
+            color: var(--text-secondary); 
+            font-size: 0.9rem;
+        }
+
+        .day-events { display: flex; flex-direction: column; gap: 0.5rem; }
+
+        .event {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.6rem 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            border-left: 3px solid var(--border);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .event:hover {
+            transform: translateX(3px);
+        }
+
+        .event.video { border-left-color: var(--accent-blue); }
+        .event.record { border-left-color: var(--accent-purple); }
+        .event.live { border-left-color: var(--accent-red); }
+        .event.script { border-left-color: var(--accent-yellow); }
+        .event.approval { border-left-color: var(--text-muted); }
+
+        .event-icon { font-size: 1.1rem; }
+        .event-title { font-size: 0.9rem; }
+        .event-type {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+
+        /* Empty state */
+        .empty-day {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-style: italic;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            .calendar-legend { flex-wrap: wrap; gap: 1rem; }
+        }
+    </style>
 </head>
 <body>
-    <nav class="nav">
-        <div class="nav-brand">🎬 Andrew's Dashboard</div>
-        <div class="nav-links">
-            <a href="/">Overview</a>
-            <a href="/videos">Videos</a>
-            <a href="/sponsors">Sponsors</a>
-            <a href="/calendar" class="active">Calendar</a>
+    <div class="container">
+        <div class="page-header">
+            <h1>📅 Production Calendar</h1>
+            <div class="header-actions">
+                <a href="/" class="btn">← Dashboard</a>
+                <a href="/videos" class="btn">Videos</a>
+                <a href="/sponsors" class="btn">Sponsors</a>
+            </div>
         </div>
-    </nav>
 
-    <main class="container">
-        <h1>📅 Production Calendar</h1>
+        <!-- Legend -->
+        <div class="calendar-legend">
+            <div class="legend-item">
+                <div class="legend-dot dot-video"></div>
+                <span>Video Due</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot dot-script"></div>
+                <span>Script Deadline</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot dot-record"></div>
+                <span>Record Date</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot dot-live"></div>
+                <span>Go Live</span>
+            </div>
+        </div>
 
+        <!-- Calendar -->
         <div class="calendar-view">
             {% for date, events in events_by_date.items() %}
-            <div class="calendar-day {{ 'past' if date < today else 'today' if date == today else '' }}">
+            {% set days_until = (datetime.strptime(date, '%Y-%m-%d') - datetime.utcnow()).days %}
+            <div class="calendar-day {{ 'past' if date < today else 'today' if date == today else '' }} {{ 'upcoming-3' if 0 < days_until <= 3 }}">
                 <div class="day-header">
-                    <span class="day-date">{{ date }}</span>
+                    <span class="day-date {{ 'today-text' if date == today }}">{{ date }}</span>
                     <span class="day-weekday">{{ weekdays[date] }}</span>
                 </div>
                 <div class="day-events">
                     {% for event in events %}
-                    <div class="event {{ event.type }}">
+                    <div class="event {{ event.type }} {{ 'record' if 'Record' in event.title else 'live' if 'Live' in event.title else 'script' if 'Script' in event.title else 'approval' if 'Approval' in event.title else 'video' }}"
+                         onclick="window.location.href='{{ event.url or '#' }}'">
                         <span class="event-icon">
-                            {% if event.type == 'video' %}📹{% endif %}
-                            {% if 'script' in event.title %}📝{% endif %}
-                            {% if 'record' in event.title %}🎥{% endif %}
-                            {% if 'approval' in event.title %}⏳{% endif %}
-                            {% if 'live' in event.title %}🔴{% endif %}
+                            {% if event.type == 'video' %}📹
+                            {% elif 'Script' in event.title %}📝
+                            {% elif 'Record' in event.title %}🎥
+                            {% elif 'Approval' in event.title %}⏳
+                            {% elif 'Live' in event.title %}🔴
+                            {% else %}📋{% endif %}
                         </span>
                         <span class="event-title">{{ event.title }}</span>
                     </div>
@@ -44,6 +243,6 @@
             </div>
             {% endfor %}
         </div>
-    </main>
+    </div>
 </body>
 </html>

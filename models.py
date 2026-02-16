@@ -27,40 +27,49 @@ VIDEO_STAGE_LABELS = {
     "published": "🚀 Published",
 }
 
-# ── Sponsor workflow stages (ordered) ───────────────────────────────
+# ── Sponsor workflow stages (ordered, simplified Kanban) ─────────────
 SPONSOR_STAGES = [
     "inquiry",
-    "approved",
-    "script",
-    "script_approved",
-    "contract_signed",
-    "scheduled",
-    "recorded",
-    "editing",
-    "brand_approval",
-    "brand_approved",
+    "negotiation",
+    "contract",
+    "content",
+    "delivered",
     "live",
-    "invoiced",
+    "paid",
 ]
 
 SPONSOR_STAGE_LABELS = {
-    "inquiry": "📩 Inquiry",
-    "approved": "✅ Approved",
-    "script": "📝 Script",
-    "script_approved": "✅ Script Approved",
-    "contract_signed": "📑 Contract Signed",
-    "scheduled": "📅 Scheduled",
-    "recorded": "🎥 Recorded",
-    "editing": "✂️ Editing",
-    "brand_approval": "⏳ Brand Approval",
-    "brand_approved": "👍 Brand Approved",
-    "live": "🔴 Live",
-    "invoiced": "💰 Invoiced",
+    "inquiry": "Inquiry",
+    "negotiation": "Negotiation",
+    "contract": "Contract",
+    "content": "Content",
+    "delivered": "Delivered",
+    "live": "Live",
+    "paid": "Paid",
 }
 
 SPONSOR_NEXT_STAGE = {}
 for i, s in enumerate(SPONSOR_STAGES[:-1]):
     SPONSOR_NEXT_STAGE[s] = SPONSOR_STAGES[i + 1]
+
+# ── Content sub-phases (when status='content') ─────────────────────
+CONTENT_PHASES = [
+    "brief_pending",
+    "script_writing", 
+    "script_submitted",
+    "script_approved",
+    "scheduled",
+    "recorded",
+]
+
+CONTENT_PHASE_LABELS = {
+    "brief_pending": "⏳ Waiting on Brief",
+    "script_writing": "✍️ Writing Script",
+    "script_submitted": "📤 Script Submitted",
+    "script_approved": "✅ Script Approved",
+    "scheduled": "📅 Scheduled",
+    "recorded": "🎥 Recorded",
+}
 
 INVOICE_STATUSES = ["not_due", "pending", "sent", "paid"]
 
@@ -187,7 +196,7 @@ def get_upcoming_deadlines(days=7):
         ("live_date", "Go live"),
     ]
     rows = conn.execute(
-        "SELECT id, brand_name, script_due, record_date, brand_approval_deadline, live_date, status FROM sponsors WHERE status NOT IN ('live', 'invoiced')"
+        "SELECT id, brand_name, script_due, record_date, brand_approval_deadline, live_date, status FROM sponsors WHERE status NOT IN ('live', 'paid')"
     ).fetchall()
     for r in rows:
         for field, label in sponsor_date_fields:

@@ -4,123 +4,696 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sponsors — Andrew's Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --bg-hover: #1c2128;
+            --text: #c9d1d9;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --border: #30363d;
+            --border-hover: #8b949e;
+            --accent-purple: #a371f7;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-pink: #f778ba;
+            --accent-cyan: #39c5cf;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Obsidian-style sidebar nav */
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 240px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 1rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-brand {
+            padding: 0.5rem 1rem 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-section {
+            padding: 0.5rem 0;
+        }
+
+        .nav-section-title {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.15s;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-tertiary);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            background: var(--bg-tertiary);
+            color: var(--accent-purple);
+            border-right: 2px solid var(--accent-purple);
+        }
+
+        .nav-icon { font-size: 1.1rem; width: 20px; text-align: center; }
+
+        /* Main content */
+        .main {
+            flex: 1;
+            margin-left: 240px;
+            padding: 1.5rem 2rem;
+            max-width: calc(100vw - 240px);
+        }
+
+        /* Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .page-title h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        /* Pipeline stats */
+        .pipeline-stats {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .stat-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .stat-pill .value {
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+
+        .stat-pill .label { color: var(--text-secondary); }
+
+        /* Kanban Board */
+        .kanban-board {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(280px, 1fr));
+            gap: 1rem;
+            overflow-x: auto;
+            padding-bottom: 2rem;
+        }
+
+        .kanban-column {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            min-width: 280px;
+            max-height: calc(100vh - 220px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .column-header {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-hover);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .column-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .column-icon { font-size: 1rem; }
+
+        .column-count {
+            background: var(--bg-tertiary);
+            padding: 0.15rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .column-body {
+            padding: 0.75rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* Sponsor Cards */
+        .sponsor-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.875rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+        }
+
+        .sponsor-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .sponsor-card.stale {
+            border-left: 3px solid var(--accent-yellow);
+        }
+
+        .sponsor-card.urgent {
+            border-left: 3px solid var(--accent-red);
+        }
+
+        .sponsor-card.action-needed {
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .brand-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            line-height: 1.3;
+        }
+
+        .deal-value {
+            font-size: 0.85rem;
+            color: var(--accent-green);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .deal-type {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-left: 0.25rem;
+        }
+
+        .card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .meta-tag {
+            font-size: 0.75rem;
+            padding: 0.15rem 0.4rem;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            color: var(--text-secondary);
+        }
+
+        .meta-tag.content-phase {
+            background: #2d1a3d;
+            color: var(--accent-purple);
+            font-weight: 500;
+        }
+
+        .card-contact {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .card-deliverables {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .card-dates {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .date-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .date-item.overdue { color: var(--accent-red); }
+        .date-item.upcoming { color: var(--accent-yellow); }
+
+        .date-icon { font-size: 0.8rem; }
+
+        .card-next-action {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .next-action-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .next-action-text {
+            font-size: 0.8rem;
+            color: var(--text);
+            line-height: 1.4;
+        }
+
+        .card-documents {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .doc-link {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--accent-blue);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .doc-link:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-blue);
+        }
+
+        /* Stage colors */
+        .stage-inquiry .column-icon { color: var(--text-muted); }
+        .stage-negotiation .column-icon { color: var(--accent-yellow); }
+        .stage-contract .column-icon { color: var(--accent-blue); }
+        .stage-content .column-icon { color: var(--accent-purple); }
+        .stage-delivered .column-icon { color: var(--accent-cyan); }
+        .stage-live .column-icon { color: var(--accent-green); }
+        .stage-paid .column-icon { color: var(--accent-pink); }
+
+        /* Buttons */
+        .btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-tertiary);
+            color: var(--text);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-hover);
+        }
+
+        .btn-primary {
+            background: var(--accent-purple);
+            border-color: var(--accent-purple);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #b083f8;
+            border-color: #b083f8;
+        }
+
+        /* Filter bar */
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        select, input[type="text"] {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.4rem 0.75rem;
+            color: var(--text);
+            font-size: 0.85rem;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; max-width: 100vw; }
+            .kanban-board { grid-template-columns: repeat(7, 300px); }
+        }
+    </style>
 </head>
 <body>
-    <nav class="nav">
-        <div class="nav-brand">🎬 Andrew's Dashboard</div>
-        <div class="nav-links">
-            <a href="/">Overview</a>
-            <a href="/videos">Videos</a>
-            <a href="/sponsors" class="active">Sponsors</a>
-            <a href="/calendar">Calendar</a>
-        </div>
-    </nav>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">🎬 Andrew's Dashboard</div>
+            <nav class="nav-section">
+                <div class="nav-section-title">Workspace</div>
+                <a href="/" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span>Overview</span>
+                </a>
+                <a href="/videos" class="nav-item">
+                    <span class="nav-icon">🎬</span>
+                    <span>Videos</span>
+                </a>
+                <a href="/sponsors" class="nav-item active">
+                    <span class="nav-icon">💰</span>
+                    <span>Sponsors</span>
+                </a>
+                <a href="/calendar" class="nav-item">
+                    <span class="nav-icon">📅</span>
+                    <span>Calendar</span>
+                </a>
+            </nav>
+            <nav class="nav-section">
+                <div class="nav-section-title">Quick Links</div>
+                <a href="https://drive.google.com" target="_blank" class="nav-item">
+                    <span class="nav-icon">📁</span>
+                    <span>Google Drive</span>
+                </a>
+                <a href="mailto:benny.s@lighthouseagents.com" class="nav-item">
+                    <span class="nav-icon">✉️</span>
+                    <span>Email Ben</span>
+                </a>
+            </nav>
+        </aside>
 
-    <main class="container">
-        <div class="page-header">
-            <h1>💰 Sponsor CRM</h1>
-            <button class="btn-primary" onclick="document.getElementById('addModal').style.display='block'">+ New Sponsor</button>
-        </div>
-
-        <!-- Sponsor Pipeline -->
-        <div class="sponsor-pipeline">
-            {% for stage in stages %}
-            <div class="sponsor-column {{ 'completed' if stage in ['live', 'invoiced'] else '' }}">
-                <div class="column-header">
-                    <span>{{ stage_labels[stage] }}</span>
-                    <span class="count">{{ sponsors_by_stage[stage]|length }}</span>
+        <!-- Main Content -->
+        <main class="main">
+            <div class="page-header">
+                <div class="page-title">
+                    <h1>Sponsor Pipeline</h1>
+                    <div class="page-subtitle">Track deals from inquiry to payment</div>
                 </div>
-                <div class="column-body">
-                    {% for sponsor in sponsors_by_stage[stage] %}
-                    <div class="sponsor-card {{ 'urgent' if sponsor.brand_approval_deadline and sponsor.brand_approval_deadline <= week_from_now and sponsor.status == 'brand_approval' else '' }}"
-                         onclick="editSponsor({{ sponsor.id }})">
-                        <div class="card-brand">{{ sponsor.brand_name }}</div>
-                        <div class="card-value">
-                            ${{ "{:,.0f}".format(sponsor.deal_value) if sponsor.deal_value else '—' }}
-                            <span class="deal-type">{{ sponsor.deal_type }}</span>
-                        </div>
-                        
-                        {% if sponsor.script_due and sponsor.status in ['approved', 'script'] %}
-                        <div class="card-deadline">📝 Script: {{ sponsor.script_due }}</div>
-                        {% endif %}
-                        
-                        {% if sponsor.record_date and sponsor.status in ['scheduled', 'recorded'] %}
-                        <div class="card-deadline">🎥 Record: {{ sponsor.record_date }}</div>
-                        {% endif %}
-                        
-                        {% if sponsor.brand_approval_deadline %}
-                        <div class="card-deadline {{ 'urgent' if sponsor.brand_approval_deadline <= week_from_now else '' }}">
-                            ⏳ Approval: {{ sponsor.brand_approval_deadline }}
-                        </div>
-                        {% endif %}
-                        
-                        {% if sponsor.live_date %}
-                        <div class="card-deadline">🔴 Live: {{ sponsor.live_date }}</div>
-                        {% endif %}
-                        
-                        <div class="card-actions">
-                            {% if stage != 'invoiced' %}
-                            <form action="/api/sponsors/{{ sponsor.id }}/advance" method="post" style="display:inline">
-                                <button type="submit" class="btn-small">Advance →</button>
-                            </form>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endfor %}
+                <div class="header-actions">
+                    <button class="btn" onclick="toggleStale()">⚠️ Show Stale</button>
+                    <a href="/calendar" class="btn">📅 Calendar</a>
+                    <button class="btn btn-primary" onclick="showAddModal()">+ New Sponsor</button>
                 </div>
             </div>
-            {% endfor %}
-        </div>
-    </main>
 
-    <!-- Add Sponsor Modal -->
-    <div id="addModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="document.getElementById('addModal').style.display='none'">&times;</span>
-            <h2>Add New Sponsor</h2>
-            <form action="/api/sponsors" method="post">
-                <label>Brand Name *</label>
-                <input type="text" name="brand_name" required>
-                
-                <label>Contact Name</label>
-                <input type="text" name="contact_name">
-                
-                <label>Contact Email</label>
-                <input type="email" name="contact_email">
-                
-                <label>Deal Type</label>
-                <select name="deal_type">
-                    <option value="flat_rate">Flat Rate</option>
-                    <option value="cpm">CPM</option>
-                </select>
-                
-                <label>Deal Value ($)</label>
-                <input type="number" name="deal_value" placeholder="5000">
-                
-                <label>Script Due</label>
-                <input type="date" name="script_due">
-                
-                <label>Record Date</label>
-                <input type="date" name="record_date">
-                
-                <label>Brand Approval Deadline</label>
-                <input type="date" name="brand_approval_deadline">
-                
-                <label>Go Live Date</label>
-                <input type="date" name="live_date">
-                
-                <label>Notes</label>
-                <textarea name="notes" rows="3"></textarea>
-                
-                <button type="submit">Create Sponsor</button>
-            </form>
-        </div>
+            <!-- Pipeline Stats -->
+            <div class="pipeline-stats">
+                <div class="stat-pill">
+                    <span class="value">${{ "{:,.0f}".format(total_pipeline_value) }}</span>
+                    <span class="label">total pipeline</span>
+                </div>
+                <div class="stat-pill">
+                    <span class="value">{{ sponsor_counts.get('inquiry', 0) + sponsor_counts.get('negotiation', 0) }}</span>
+                    <span class="label">active deals</span>
+                </div>
+                <div class="stat-pill">
+                    <span class="value">{{ sponsor_counts.get('live', 0) }}</span>
+                    <span class="label">live</span>
+                </div>
+                <div class="stat-pill">
+                    <span class="value">{{ sponsor_counts.get('paid', 0) }}</span>
+                    <span class="label">paid</span>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <span class="filter-label">Filter:</span>
+                    <select id="filterStage" onchange="filterCards()">
+                        <option value="">All Stages</option>
+                        {% for stage in stages %}
+                        <option value="{{ stage }}">{{ stage_labels[stage] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">Contact:</span>
+                    <select id="filterContact" onchange="filterCards()">
+                        <option value="">All Contacts</option>
+                        <option value="Ben Stewart">Ben Stewart</option>
+                        <option value="Tom Melody">Tom Melody</option>
+                        <option value="Joaquin Barberis">Joaquin Barberis</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <input type="text" id="searchBrand" placeholder="Search brands..." onkeyup="filterCards()">
+                </div>
+            </div>
+
+            <!-- Kanban Board -->
+            <div class="kanban-board">
+                {% for stage in stages %}
+                {% set stage_sponsors = sponsors_by_stage.get(stage, []) %}
+                <div class="kanban-column stage-{{ stage }}" data-stage="{{ stage }}">
+                    <div class="column-header">
+                        <div class="column-title">
+                            <span class="column-icon">
+                                {% if stage == 'inquiry' %}💬
+                                {% elif stage == 'negotiation' %}🤝
+                                {% elif stage == 'contract' %}📝
+                                {% elif stage == 'content' %}🎬
+                                {% elif stage == 'delivered' %}📤
+                                {% elif stage == 'live' %}🔴
+                                {% elif stage == 'paid' %}✅
+                                {% else %}📋{% endif %}
+                            </span>
+                            <span>{{ stage_labels[stage] }}</span>
+                        </div>
+                        <span class="column-count">{{ stage_sponsors|length }}</span>
+                    </div>
+                    <div class="column-body">
+                        {% for sponsor in stage_sponsors %}
+                        {% set is_stale = sponsor.next_action_due and sponsor.next_action_due < today %}
+                        {% set is_urgent = sponsor.next_action_due and sponsor.next_action_due <= three_days %}
+                        {% set needs_action = sponsor.next_action and 'ACTION NEEDED' in sponsor.next_action %}
+                        
+                        <div class="sponsor-card {{ 'stale' if is_stale else '' }} {{ 'urgent' if is_urgent else '' }} {{ 'action-needed' if needs_action else '' }}"
+                             data-brand="{{ sponsor.brand_name.lower() }}"
+                             data-contact="{{ sponsor.contact_name }}"
+                             onclick="editSponsor({{ sponsor.id }})">
+                            
+                            <div class="card-header">
+                                <div class="brand-name">{{ sponsor.brand_name }}</div>
+                                <div class="deal-value">
+                                    {% if sponsor.deal_value %}${{ "{:,.0f}".format(sponsor.deal_value) }}{% else %}—{% endif %}
+                                    <span class="deal-type">{{ sponsor.deal_type }}</span>
+                                </div>
+                            </div>
+
+                            <div class="card-meta">
+                                {% if sponsor.contact_name %}
+                                <span class="meta-tag">👤 {{ sponsor.contact_name.split()[0] }}</span>
+                                {% endif %}
+                                {% if sponsor.status == 'content' and sponsor.content_phase %}
+                                <span class="meta-tag content-phase">{{ content_phase_labels[sponsor.content_phase] }}</span>
+                                {% endif %}
+                                {% if sponsor.record_date %}
+                                <span class="meta-tag">🎥 {{ sponsor.record_date }}</span>
+                                {% endif %}
+                            </div>
+
+                            {% if sponsor.deliverables %}
+                            <div class="card-deliverables">{{ sponsor.deliverables[:80] }}{% if sponsor.deliverables|length > 80 %}...{% endif %}</div>
+                            {% endif %}
+
+                            <div class="card-dates">
+                                {% if sponsor.script_due %}
+                                <div class="date-item {{ 'overdue' if sponsor.script_due < today else 'upcoming' if sponsor.script_due <= three_days else '' }}">
+                                    <span class="date-icon">✍️</span>
+                                    <span>Script: {{ sponsor.script_due }}</span>
+                                </div>
+                                {% endif %}
+                                {% if sponsor.brand_approval_deadline %}
+                                <div class="date-item {{ 'overdue' if sponsor.brand_approval_deadline < today else 'upcoming' if sponsor.brand_approval_deadline <= three_days else '' }}">
+                                    <span class="date-icon">⏳</span>
+                                    <span>Approval: {{ sponsor.brand_approval_deadline }}</span>
+                                </div>
+                                {% endif %}
+                                {% if sponsor.live_date %}
+                                <div class="date-item">
+                                    <span class="date-icon">🔴</span>
+                                    <span>Live: {{ sponsor.live_date }}</span>
+                                </div>
+                                {% endif %}
+                                {% if sponsor.status == 'live' and sponsor.payment_due_date %}
+                                <div class="date-item {{ 'overdue' if sponsor.payment_due_date < today else 'upcoming' if sponsor.payment_due_date <= three_days else '' }}">
+                                    <span class="date-icon">💰</span>
+                                    <span>Payment due: {{ sponsor.payment_due_date }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            {% if sponsor.next_action %}
+                            <div class="card-next-action">
+                                <div class="next-action-label">Next Action</div>
+                                <div class="next-action-text">{{ sponsor.next_action }}</div>
+                            </div>
+                            {% endif %}
+
+                            {% if sponsor.contract_link or sponsor.brief_link or sponsor.script_link %}
+                            <div class="card-documents">
+                                {% if sponsor.contract_link %}
+                                <a href="{{ sponsor.contract_link }}" class="doc-link" onclick="event.stopPropagation()" target="_blank">📄 Contract</a>
+                                {% endif %}
+                                {% if sponsor.brief_link %}
+                                <a href="{{ sponsor.brief_link }}" class="doc-link" onclick="event.stopPropagation()" target="_blank">📋 Brief</a>
+                                {% endif %}
+                                {% if sponsor.script_link %}
+                                <a href="{{ sponsor.script_link }}" class="doc-link" onclick="event.stopPropagation()" target="_blank">✍️ Script</a>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </main>
     </div>
 
     <script>
+        function filterCards() {
+            const stageFilter = document.getElementById('filterStage').value;
+            const contactFilter = document.getElementById('filterContact').value;
+            const searchText = document.getElementById('searchBrand').value.toLowerCase();
+            
+            document.querySelectorAll('.sponsor-card').forEach(card => {
+                const stage = card.closest('.kanban-column').dataset.stage;
+                const contact = card.dataset.contact || '';
+                const brand = card.dataset.brand || '';
+                
+                const matchesStage = !stageFilter || stage === stageFilter;
+                const matchesContact = !contactFilter || contact.includes(contactFilter);
+                const matchesSearch = !searchText || brand.includes(searchText);
+                
+                card.style.display = (matchesStage && matchesContact && matchesSearch) ? 'block' : 'none';
+            });
+        }
+
+        function toggleStale() {
+            document.querySelectorAll('.sponsor-card').forEach(card => {
+                if (!card.classList.contains('stale') && !card.classList.contains('urgent')) {
+                    card.style.opacity = card.style.opacity === '0.3' ? '1' : '0.3';
+                }
+            });
+        }
+
         function editSponsor(id) {
             window.location.href = `/sponsors/${id}/edit`;
+        }
+
+        function showAddModal() {
+            // TODO: Implement add modal
+            alert('Add sponsor modal - to be implemented');
         }
     </script>
 </body>

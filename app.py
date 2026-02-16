@@ -11,6 +11,7 @@ from models import (
     get_upcoming_deadlines, get_calendar_events,
     VIDEO_STAGES, VIDEO_STAGE_LABELS,
     SPONSOR_STAGES, SPONSOR_STAGE_LABELS, SPONSOR_NEXT_STAGE,
+    CONTENT_PHASES, CONTENT_PHASE_LABELS,
     INVOICE_STATUSES,
 )
 
@@ -38,7 +39,7 @@ def dashboard():
     for s in VIDEO_STAGES:
         video_counts[s] = sum(1 for v in videos if v["stage"] == s)
 
-    active_sponsors = [s for s in sponsors if s["status"] not in ("live", "invoiced")]
+    active_sponsors = [s for s in sponsors if s["status"] not in ("live", "paid")]
     total_pipeline_value = sum(s["deal_value"] or 0 for s in active_sponsors)
 
     deadlines = get_upcoming_deadlines(14)
@@ -97,28 +98,43 @@ def sponsors_page():
     conn = get_db()
     sponsors = conn.execute("SELECT * FROM sponsors ORDER BY id DESC").fetchall()
     conn.close()
-    
+
     # Group sponsors by stage
     sponsors_by_stage = {stage: [] for stage in SPONSOR_STAGES}
     for s in sponsors:
         sponsors_by_stage[s["status"]].append(s)
-    
-    week_from_now = (datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d")
-    
+
+    # Calculate pipeline value (active deals only)
+    active_statuses = ["inquiry", "negotiation", "contract", "content", "delivered"]
+    total_pipeline_value = sum(s["deal_value"] or 0 for s in sponsors if s["status"] in active_statuses)
+
+    # Sponsor counts
+    sponsor_counts = {}
+    for s in SPONSOR_STAGES:
+        sponsor_counts[s] = sum(1 for sp in sponsors if sp["status"] == s)
+
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    three_days = (datetime.utcnow() + timedelta(days=3)).strftime("%Y-%m-%d")
+
     return render_template(
         "sponsors.html",
         sponsors=sponsors,
         sponsors_by_stage=sponsors_by_stage,
         stages=SPONSOR_STAGES,
         stage_labels=SPONSOR_STAGE_LABELS,
+        content_phase_labels=CONTENT_PHASE_LABELS,
         next_stage=SPONSOR_NEXT_STAGE,
-        week_from_now=week_from_now,
+        total_pipeline_value=total_pipeline_value,
+        sponsor_counts=sponsor_counts,
+        today=today,
+        three_days=three_days,
     )
 
 
 @app.route("/calendar")
 def calendar_page():
     from collections import defaultdict
+    from datetime import datetime
     
     events = get_calendar_events()
     events_by_date = defaultdict(list)
@@ -138,6 +154,26 @@ def calendar_page():
         events_by_date=dict(events_by_date),
         weekdays=weekdays,
         today=today,
+        datetime=datetime,
+    )
+
+
+@app.route("/sponsors/<int:sid>/edit")
+def edit_sponsor_page(sid):
+    conn = get_db()
+    sponsor = conn.execute("SELECT * FROM sponsors WHERE id = ?", (sid,)).fetchone()
+    conn.close()
+    
+    if not sponsor:
+        return "Sponsor not found", 404
+    
+    return render_template(
+        "edit_sponsor.html",
+        sponsor=sponsor,
+        stages=SPONSOR_STAGES,
+        stage_labels=SPONSOR_STAGE_LABELS,
+        content_phases=CONTENT_PHASES,
+        content_phase_labels=CONTENT_PHASE_LABELS,
     )
 
 
@@ -243,8 +279,9 @@ def api_create_sponsor():
     conn = get_db()
     cur = conn.execute(
         """INSERT INTO sponsors (brand_name, deal_value, deal_type, status, script_due,
-           record_date, brand_approval_deadline, live_date, notes, contact_name, contact_email)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+           record_date, brand_approval_deadline, live_date, notes, contact_name, contact_email,
+           deliverables, next_action, next_action_due)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
             brand,
             data.get("deal_value", 0),
@@ -257,6 +294,9 @@ def api_create_sponsor():
             data.get("notes", ""),
             data.get("contact_name", ""),
             data.get("contact_email", ""),
+            data.get("deliverables", ""),
+            data.get("next_action", ""),
+            data.get("next_action_due"),
         ),
     )
     sid = cur.lastrowid
@@ -284,6 +324,10 @@ def api_update_sponsor(sid):
         "script_due", "record_date", "brand_approval_deadline", "live_date",
         "invoice_status", "invoice_amount", "views_at_30_days",
         "notes", "contact_name", "contact_email",
+        "brief", "brief_due", "contract_link", "brief_link", "script_link",
+        "last_contact_date", "next_action", "next_action_due", "deliverables",
+        "content_phase", "payment_terms_days", "invoice_generated_date",
+        "payment_due_date", "payment_received_date", "youtube_video_id", "youtube_video_title",
     )
     for col in allowed:
         if col in data:
@@ -321,7 +365,7 @@ def api_advance_sponsor(sid):
     updates = {"status": next_stage}
     if next_stage == "live":
         if row["deal_type"] == "flat_rate":
-            updates["invoice_status"] = "pending"
+            updates["invoice_status"] = "not_due"
             updates["invoice_amount"] = row["deal_value"]
 
     set_clause = ", ".join(f"{k} = ?" for k in updates)
