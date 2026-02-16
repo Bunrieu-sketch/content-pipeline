@@ -506,19 +506,23 @@
             <!-- Pipeline Stats -->
             <div class="pipeline-stats">
                 <div class="stat-pill">
+                    <span class="value">{{ total_deals }}</span>
+                    <span class="label">total deals</span>
+                </div>
+                <div class="stat-pill">
                     <span class="value">${{ "{:,.0f}".format(total_pipeline_value) }}</span>
-                    <span class="label">total pipeline</span>
+                    <span class="label">pipeline value</span>
                 </div>
                 <div class="stat-pill">
-                    <span class="value">{{ sponsor_counts.get('inquiry', 0) + sponsor_counts.get('negotiation', 0) }}</span>
-                    <span class="label">active deals</span>
+                    <span class="value">{{ active_deals }}</span>
+                    <span class="label">in progress</span>
                 </div>
                 <div class="stat-pill">
-                    <span class="value">{{ sponsor_counts.get('live', 0) }}</span>
+                    <span class="value">{{ live_deals }}</span>
                     <span class="label">live</span>
                 </div>
                 <div class="stat-pill">
-                    <span class="value">{{ sponsor_counts.get('paid', 0) }}</span>
+                    <span class="value">{{ paid_deals }}</span>
                     <span class="label">paid</span>
                 </div>
             </div>

@@ -39,8 +39,12 @@ def dashboard():
     for s in VIDEO_STAGES:
         video_counts[s] = sum(1 for v in videos if v["stage"] == s)
 
-    active_sponsors = [s for s in sponsors if s["status"] not in ("live", "paid")]
-    total_pipeline_value = sum(s["deal_value"] or 0 for s in active_sponsors)
+    # Sponsor stats - all non-paid are considered active
+    active_sponsors = [s for s in sponsors if s["status"] != "paid"]
+    
+    # Pipeline value - deals in progress (excluding live and paid)
+    pipeline_statuses = ["inquiry", "negotiation", "contract", "content", "delivered"]
+    total_pipeline_value = sum(s["deal_value"] or 0 for s in sponsors if s["status"] in pipeline_statuses)
 
     deadlines = get_upcoming_deadlines(14)
     
@@ -104,7 +108,7 @@ def sponsors_page():
     for s in sponsors:
         sponsors_by_stage[s["status"]].append(s)
 
-    # Calculate pipeline value (active deals only)
+    # Calculate pipeline value (active deals only - not live or paid)
     active_statuses = ["inquiry", "negotiation", "contract", "content", "delivered"]
     total_pipeline_value = sum(s["deal_value"] or 0 for s in sponsors if s["status"] in active_statuses)
 
@@ -112,6 +116,12 @@ def sponsors_page():
     sponsor_counts = {}
     for s in SPONSOR_STAGES:
         sponsor_counts[s] = sum(1 for sp in sponsors if sp["status"] == s)
+    
+    # Derived counts for display
+    total_deals = len(sponsors)
+    active_deals = sum(sponsor_counts[s] for s in active_statuses)
+    live_deals = sponsor_counts.get('live', 0)
+    paid_deals = sponsor_counts.get('paid', 0)
 
     today = datetime.utcnow().strftime("%Y-%m-%d")
     three_days = (datetime.utcnow() + timedelta(days=3)).strftime("%Y-%m-%d")
@@ -126,6 +136,10 @@ def sponsors_page():
         next_stage=SPONSOR_NEXT_STAGE,
         total_pipeline_value=total_pipeline_value,
         sponsor_counts=sponsor_counts,
+        total_deals=total_deals,
+        active_deals=active_deals,
+        live_deals=live_deals,
+        paid_deals=paid_deals,
         today=today,
         three_days=three_days,
     )
