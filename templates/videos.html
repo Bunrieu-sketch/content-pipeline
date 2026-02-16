@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Videos — Andrew's Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-brand">🎬 Andrew's Dashboard</div>
+        <div class="nav-links">
+            <a href="/">Overview</a>
+            <a href="/videos" class="active">Videos</a>
+            <a href="/sponsors">Sponsors</a>
+            <a href="/calendar">Calendar</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="page-header">
+            <h1>🎬 Video Pipeline</h1>
+            <button class="btn-primary" onclick="document.getElementById('addModal').style.display='block'">+ New Video</button>
+        </div>
+
+        <!-- Kanban Board -->
+        <div class="kanban">
+            {% for stage in stages %}
+            <div class="kanban-column" data-stage="{{ stage }}">
+                <div class="column-header">
+                    <span>{{ stage_labels[stage] }}</span>
+                    <span class="count">{{ videos_by_stage[stage]|length }}</span>
+                </div>
+                <div class="column-body" ondrop="drop(event, '{{ stage }}')" ondragover="allowDrop(event)">
+                    {% for video in videos_by_stage[stage] %}
+                    <div class="kanban-card {{ 'has-deadline' if video.due_date else '' }} {{ 'overdue' if video.due_date and video.due_date < today else '' }}"
+                         draggable="true"
+                         ondragstart="drag(event, {{ video.id }})"
+                         onclick="editVideo({{ video.id }})">
+                        <div class="card-title">{{ video.title }}</div>
+                        {% if video.due_date %}
+                        <div class="card-due {{ 'overdue' if video.due_date < today else 'upcoming' if video.due_date <= week_from_now else '' }}">
+                            📅 {{ video.due_date }}
+                        </div>
+                        {% endif %}
+                        {% if video.sponsor_id %}
+                        <div class="card-sponsor">💰 Sponsored</div>
+                        {% endif %}
+                        {% if video.notes %}
+                        <div class="card-notes">📝</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+
+    <!-- Add Video Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="document.getElementById('addModal').style.display='none'">&times;</span>
+            <h2>Add New Video</h2>
+            <form action="/api/videos" method="post">
+                <label>Title</label>
+                <input type="text" name="title" required>
+                
+                <label>Stage</label>
+                <select name="stage">
+                    {% for stage in stages %}
+                    <option value="{{ stage }}">{{ stage_labels[stage] }}</option>
+                    {% endfor %}
+                </select>
+                
+                <label>Due Date (optional)</label>
+                <input type="date" name="due_date">
+                
+                <label>Link to Sponsor (optional)</label>
+                <select name="sponsor_id">
+                    <option value="">— None —</option>
+                    {% for s in sponsors %}
+                    <option value="{{ s.id }}">{{ s.brand_name }}</option>
+                    {% endfor %}
+                </select>
+                
+                <label>Notes</label>
+                <textarea name="notes" rows="3"></textarea>
+                
+                <button type="submit">Create Video</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function allowDrop(ev) { ev.preventDefault(); }
+        function drag(ev, id) { ev.dataTransfer.setData("videoId", id); }
+        function drop(ev, stage) {
+            ev.preventDefault();
+            const videoId = ev.dataTransfer.getData("videoId");
+            fetch(`/api/videos/${videoId}/stage`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({stage: stage})
+            }).then(() => location.reload());
+        }
+        function editVideo(id) {
+            window.location.href = `/videos/${id}/edit`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar — Andrew's Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-brand">🎬 Andrew's Dashboard</div>
+        <div class="nav-links">
+            <a href="/">Overview</a>
+            <a href="/videos">Videos</a>
+            <a href="/sponsors">Sponsors</a>
+            <a href="/calendar" class="active">Calendar</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h1>📅 Production Calendar</h1>
+
+        <div class="calendar-view">
+            {% for date, events in events_by_date.items() %}
+            <div class="calendar-day {{ 'past' if date < today else 'today' if date == today else '' }}">
+                <div class="day-header">
+                    <span class="day-date">{{ date }}</span>
+                    <span class="day-weekday">{{ weekdays[date] }}</span>
+                </div>
+                <div class="day-events">
+                    {% for event in events %}
+                    <div class="event {{ event.type }}">
+                        <span class="event-icon">
+                            {% if event.type == 'video' %}📹{% endif %}
+                            {% if 'script' in event.title %}📝{% endif %}
+                            {% if 'record' in event.title %}🎥{% endif %}
+                            {% if 'approval' in event.title %}⏳{% endif %}
+                            {% if 'live' in event.title %}🔴{% endif %}
+                        </span>
+                        <span class="event-title">{{ event.title }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+</body>
+</html>
