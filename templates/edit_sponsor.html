@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Sponsor — Andrew's Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-brand">🎬 Andrew's Dashboard</div>
+        <div class="nav-links">
+            <a href="/">Overview</a>
+            <a href="/videos">Videos</a>
+            <a href="/sponsors">Sponsors</a>
+            <a href="/calendar">Calendar</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h1>💰 Edit Sponsor: {{ sponsor.brand_name }}</h1>
+
+        <form action="/api/sponsors/{{ sponsor.id }}" method="post" class="edit-form">
+            <div class="form-grid">
+                <div>
+                    <label>Brand Name *</label>
+                    <input type="text" name="brand_name" value="{{ sponsor.brand_name }}" required>
+                </div>
+                
+                <div>
+                    <label>Status</label>
+                    <select name="status">
+                        {% for stage in stages %}
+                        <option value="{{ stage }}" {{ 'selected' if sponsor.status == stage else '' }}>{{ stage_labels[stage] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label>Contact Name</label>
+                    <input type="text" name="contact_name" value="{{ sponsor.contact_name or '' }}">
+                </div>
+                
+                <div>
+                    <label>Contact Email</label>
+                    <input type="email" name="contact_email" value="{{ sponsor.contact_email or '' }}">
+                </div>
+                
+                <div>
+                    <label>Deal Type</label>
+                    <select name="deal_type">
+                        <option value="flat_rate" {{ 'selected' if sponsor.deal_type == 'flat_rate' else '' }}>Flat Rate</option>
+                        <option value="cpm" {{ 'selected' if sponsor.deal_type == 'cpm' else '' }}>CPM</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label>Deal Value ($)</label>
+                    <input type="number" name="deal_value" value="{{ sponsor.deal_value or '' }}">
+                </div>
+                
+                <div>
+                    <label>Script Due</label>
+                    <input type="date" name="script_due" value="{{ sponsor.script_due or '' }}">
+                </div>
+                
+                <div>
+                    <label>Record Date</label>
+                    <input type="date" name="record_date" value="{{ sponsor.record_date or '' }}">
+                </div>
+                
+                <div>
+                    <label>Brand Approval Deadline</label>
+                    <input type="date" name="brand_approval_deadline" value="{{ sponsor.brand_approval_deadline or '' }}">
+                </div>
+                
+                <div>
+                    <label>Go Live Date</label>
+                    <input type="date" name="live_date" value="{{ sponsor.live_date or '' }}">
+                </div>
+            </div>
+            
+            <label>Notes</label>
+            <textarea name="notes" rows="5">{{ sponsor.notes or '' }}</textarea>
+            
+            <!-- Invoice Section -->
+            {% if sponsor.status in ['live', 'invoiced'] %}
+            <hr>
+            <h3>💰 Invoice Details</h3>
+            <div class="form-grid">
+                <div>
+                    <label>Invoice Status</label>
+                    <select name="invoice_status">
+                        <option value="not_due" {{ 'selected' if sponsor.invoice_status == 'not_due' else '' }}>Not Due</option>
+                        <option value="pending" {{ 'selected' if sponsor.invoice_status == 'pending' else '' }}>Pending</option>
+                        <option value="sent" {{ 'selected' if sponsor.invoice_status == 'sent' else '' }}>Sent</option>
+                        <option value="paid" {{ 'selected' if sponsor.invoice_status == 'paid' else '' }}>Paid</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label>Invoice Amount ($)</label>
+                    <input type="number" name="invoice_amount" value="{{ sponsor.invoice_amount or '' }}">
+                </div>
+                
+                <div>
+                    <label>Views at 30 Days (for CPM)</label>
+                    <input type="number" name="views_at_30_days" value="{{ sponsor.views_at_30_days or '' }}">
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="form-actions">
+                <a href="/sponsors" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary">Save Changes</button>
+            </div>
+        </form>
+
+        <form action="/api/sponsors/{{ sponsor.id }}/delete" method="post" class="delete-form" onsubmit="return confirm('Delete {{ sponsor.brand_name }}?')">
+            <button type="submit" class="btn-danger">🗑️ Delete Sponsor</button>
+        </form>
+    </main>
+</body>
+</html>

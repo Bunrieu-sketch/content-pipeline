@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Video — Andrew's Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-brand">🎬 Andrew's Dashboard</div>
+        <div class="nav-links">
+            <a href="/">Overview</a>
+            <a href="/videos">Videos</a>
+            <a href="/sponsors">Sponsors</a>
+            <a href="/calendar">Calendar</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h1>🎬 Edit Video</h1>
+
+        <form action="/api/videos/{{ video.id }}" method="post" class="edit-form">
+            <label>Title</label>
+            <input type="text" name="title" value="{{ video.title }}" required>
+            
+            <label>Stage</label>
+            <select name="stage">
+                {% for stage in stages %}
+                <option value="{{ stage }}" {{ 'selected' if video.stage == stage else '' }}>{{ stage_labels[stage] }}</option>
+                {% endfor %}
+            </select>
+            
+            <label>Due Date</label>
+            <input type="date" name="due_date" value="{{ video.due_date or '' }}">
+            
+            <label>Linked Sponsor</label>
+            <select name="sponsor_id">
+                <option value="" {{ 'selected' if not video.sponsor_id else '' }}>— None —</option>
+                {% for s in sponsors %}
+                <option value="{{ s.id }}" {{ 'selected' if video.sponsor_id == s.id else '' }}>{{ s.brand_name }}</option>
+                {% endfor %}
+            </select>
+            
+            <label>Notes</label>
+            <textarea name="notes" rows="5">{{ video.notes or '' }}</textarea>
+            
+            <div class="form-actions">
+                <a href="/videos" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary">Save Changes</button>
+            </div>
+        </form>
+
+        <form action="/api/videos/{{ video.id }}/delete" method="post" class="delete-form" onsubmit="return confirm('Delete this video?')">
+            <button type="submit" class="btn-danger">🗑️ Delete Video</button>
+        </form>
+    </main>
+</body>
+</html>

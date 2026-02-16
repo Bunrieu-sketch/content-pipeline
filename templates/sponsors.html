@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sponsors — Andrew's Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-brand">🎬 Andrew's Dashboard</div>
+        <div class="nav-links">
+            <a href="/">Overview</a>
+            <a href="/videos">Videos</a>
+            <a href="/sponsors" class="active">Sponsors</a>
+            <a href="/calendar">Calendar</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="page-header">
+            <h1>💰 Sponsor CRM</h1>
+            <button class="btn-primary" onclick="document.getElementById('addModal').style.display='block'">+ New Sponsor</button>
+        </div>
+
+        <!-- Sponsor Pipeline -->
+        <div class="sponsor-pipeline">
+            {% for stage in stages %}
+            <div class="sponsor-column {{ 'completed' if stage in ['live', 'invoiced'] else '' }}">
+                <div class="column-header">
+                    <span>{{ stage_labels[stage] }}</span>
+                    <span class="count">{{ sponsors_by_stage[stage]|length }}</span>
+                </div>
+                <div class="column-body">
+                    {% for sponsor in sponsors_by_stage[stage] %}
+                    <div class="sponsor-card {{ 'urgent' if sponsor.brand_approval_deadline and sponsor.brand_approval_deadline <= week_from_now and sponsor.status == 'brand_approval' else '' }}"
+                         onclick="editSponsor({{ sponsor.id }})">
+                        <div class="card-brand">{{ sponsor.brand_name }}</div>
+                        <div class="card-value">
+                            ${{ "{:,.0f}".format(sponsor.deal_value) if sponsor.deal_value else '—' }}
+                            <span class="deal-type">{{ sponsor.deal_type }}</span>
+                        </div>
+                        
+                        {% if sponsor.script_due and sponsor.status in ['approved', 'script'] %}
+                        <div class="card-deadline">📝 Script: {{ sponsor.script_due }}</div>
+                        {% endif %}
+                        
+                        {% if sponsor.record_date and sponsor.status in ['scheduled', 'recorded'] %}
+                        <div class="card-deadline">🎥 Record: {{ sponsor.record_date }}</div>
+                        {% endif %}
+                        
+                        {% if sponsor.brand_approval_deadline %}
+                        <div class="card-deadline {{ 'urgent' if sponsor.brand_approval_deadline <= week_from_now else '' }}">
+                            ⏳ Approval: {{ sponsor.brand_approval_deadline }}
+                        </div>
+                        {% endif %}
+                        
+                        {% if sponsor.live_date %}
+                        <div class="card-deadline">🔴 Live: {{ sponsor.live_date }}</div>
+                        {% endif %}
+                        
+                        <div class="card-actions">
+                            {% if stage != 'invoiced' %}
+                            <form action="/api/sponsors/{{ sponsor.id }}/advance" method="post" style="display:inline">
+                                <button type="submit" class="btn-small">Advance →</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+
+    <!-- Add Sponsor Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="document.getElementById('addModal').style.display='none'">&times;</span>
+            <h2>Add New Sponsor</h2>
+            <form action="/api/sponsors" method="post">
+                <label>Brand Name *</label>
+                <input type="text" name="brand_name" required>
+                
+                <label>Contact Name</label>
+                <input type="text" name="contact_name">
+                
+                <label>Contact Email</label>
+                <input type="email" name="contact_email">
+                
+                <label>Deal Type</label>
+                <select name="deal_type">
+                    <option value="flat_rate">Flat Rate</option>
+                    <option value="cpm">CPM</option>
+                </select>
+                
+                <label>Deal Value ($)</label>
+                <input type="number" name="deal_value" placeholder="5000">
+                
+                <label>Script Due</label>
+                <input type="date" name="script_due">
+                
+                <label>Record Date</label>
+                <input type="date" name="record_date">
+                
+                <label>Brand Approval Deadline</label>
+                <input type="date" name="brand_approval_deadline">
+                
+                <label>Go Live Date</label>
+                <input type="date" name="live_date">
+                
+                <label>Notes</label>
+                <textarea name="notes" rows="3"></textarea>
+                
+                <button type="submit">Create Sponsor</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function editSponsor(id) {
+            window.location.href = `/sponsors/${id}/edit`;
+        }
+    </script>
+</body>
+</html>

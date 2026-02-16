@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Dashboard — Andrew Fraser</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-brand">🎬 Andrew's Dashboard</div>
+        <div class="nav-links">
+            <a href="/" class="active">Overview</a>
+            <a href="/videos">Videos</a>
+            <a href="/sponsors">Sponsors</a>
+            <a href="/calendar">Calendar</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- Stats Row -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ video_counts.values()|sum }}</div>
+                <div class="stat-label">Total Videos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ video_counts.get('published', 0) }}</div>
+                <div class="stat-label">Published</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ active_sponsors|length }}</div>
+                <div class="stat-label">Active Sponsors</div>
+            </div>
+            <div class="stat-card money">
+                <div class="stat-value">${{ "{:,.0f}".format(total_pipeline_value) }}</div>
+                <div class="stat-label">Pipeline Value</div>
+            </div>
+        </div>
+
+        <!-- Alerts Section -->
+        {% if deadlines %}
+        <section class="alerts">
+            <h2>⚠️ Upcoming Deadlines</h2>
+            {% for d in deadlines %}
+            <div class="alert alert-{{ d.urgency }}">
+                <span class="alert-date">{{ d.date }}</span>
+                <span class="alert-text">{{ d.label }}</span>
+            </div>
+            {% endfor %}
+        </section>
+        {% endif %}
+
+        <!-- Video Pipeline Summary -->
+        <section class="pipeline-summary">
+            <h2>🎬 Video Pipeline</h2>
+            <div class="pipeline-bars">
+                {% for stage in video_stages %}
+                {% set count = video_counts.get(stage, 0) %}
+                {% if count > 0 %}
+                <div class="pipeline-bar" style="--count: {{ count }};">
+                    <div class="bar-label">{{ stage_labels[stage] }}</div>
+                    <div class="bar-value">{{ count }}</div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Sponsor Pipeline Summary -->
+        <section class="sponsor-summary">
+            <h2>💰 Sponsor Pipeline</h2>
+            <div class="sponsor-stages">
+                {% for stage in sponsor_stages %}
+                {% set count = sponsor_counts.get(stage, 0) %}
+                {% if count > 0 %}
+                <div class="sponsor-stage stage-{{ stage }}">
+                    <div class="stage-count">{{ count }}</div>
+                    <div class="stage-name">{{ sponsor_labels[stage] }}</div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Quick Add Forms -->
+        <div class="quick-add">
+            <div class="add-box">
+                <h3>➕ Quick Add Video</h3>
+                <form action="/api/videos" method="post" class="inline-form">
+                    <input type="text" name="title" placeholder="Video title" required>
+                    <select name="stage">
+                        {% for stage in video_stages %}
+                        <option value="{{ stage }}">{{ stage_labels[stage] }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="date" name="due_date" placeholder="Due date (optional)">
+                    <button type="submit">Add</button>
+                </form>
+            </div>
+
+            <div class="add-box">
+                <h3>➕ Quick Add Sponsor</h3>
+                <form action="/api/sponsors" method="post" class="inline-form">
+                    <input type="text" name="brand_name" placeholder="Brand name" required>
+                    <select name="deal_type">
+                        <option value="flat_rate">Flat Rate</option>
+                        <option value="cpm">CPM</option>
+                    </select>
+                    <input type="number" name="deal_value" placeholder="Deal value ($)">
+                    <button type="submit">Add</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <section class="activity">
+            <h2>📝 Recent Activity</h2>
+            <ul class="activity-list">
+                {% for item in recent %}
+                <li>
+                    <span class="activity-time">{{ item.created_at[:16] if item.created_at else '' }}</span>
+                    <span class="activity-action">{{ item.action }}</span>
+                    <span class="activity-entity">{{ item.entity_type }} #{{ item.entity_id }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </section>
+    </main>
+</body>
+</html>
