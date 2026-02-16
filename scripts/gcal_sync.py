@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Google Calendar sync for YouTube Dashboard."""
+"""Google Calendar sync for YouTube Dashboard using Service Account."""
 
 import os
 import json
@@ -9,19 +9,18 @@ from pathlib import Path
 
 # Google Calendar API imports
 try:
-    from google.auth.transport.requests import Request
-    from google.oauth2.credentials import Credentials
-    from google_auth_oauthlib.flow import InstalledAppFlow
+    from google.oauth2 import service_account
     from googleapiclient.discovery import build
     from googleapiclient.errors import HttpError
     GOOGLE_API_AVAILABLE = True
 except ImportError:
     GOOGLE_API_AVAILABLE = False
-    print("Google API libraries not installed. Run: pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client")
+    print("Google API libraries not installed. Run: pip install google-auth google-api-python-client")
 
 # Constants
 DB_PATH = Path(__file__).resolve().parent.parent / "dashboard.db"
 SCOPES = ['https://www.googleapis.com/auth/calendar']
+SERVICE_ACCOUNT_FILE = Path(__file__).resolve().parent.parent / "service_account.json"
 
 # Calendar colors
 COLORS = {
@@ -40,38 +39,53 @@ def get_db():
     return conn
 
 
-def get_credentials():
-    """Get or refresh Google Calendar credentials."""
-    creds = None
-    token_path = os.getenv('GCAL_TOKEN_PATH', 'token.json')
-    client_secret_path = os.getenv('GCAL_CLIENT_SECRET_PATH', 'client_secret.json')
+def get_calendar_service():
+    """Get Google Calendar service using service account."""
+    if not SERVICE_ACCOUNT_FILE.exists():
+        print(f"ERROR: {SERVICE_ACCOUNT_FILE} not found!")
+        return None
     
-    # Load existing token
-    if os.path.exists(token_path):
-        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
-    
-    # Refresh or create new token
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            if not os.path.exists(client_secret_path):
-                print(f"ERROR: {client_secret_path} not found!")
-                print("Follow setup instructions in docs/GCAL_SETUP.md")
-                return None
-            
-            flow = InstalledAppFlow.from_client_secrets_file(
-                client_secret_path, SCOPES)
-            creds = flow.run_local_server(port=0)
+    try:
+        credentials = service_account.Credentials.from_service_account_file(
+            str(SERVICE_ACCOUNT_FILE),
+            scopes=SCOPES
+        )
+        service = build('calendar', 'v3', credentials=credentials)
+        return service
+    except Exception as e:
+        print(f"Error loading service account: {e}")
+        return None
+
+
+def get_or_create_calendar(service, calendar_name="YouTube Production"):
+    """Get or create the production calendar."""
+    try:
+        # List existing calendars
+        calendars_result = service.calendarList().list().execute()
+        calendars = calendars_result.get('items', [])
         
-        # Save token
-        with open(token_path, 'w') as token:
-            token.write(creds.to_json())
-    
-    return creds
+        for cal in calendars:
+            if cal.get('summary') == calendar_name:
+                print(f"Found existing calendar: {calendar_name} (ID: {cal['id']})")
+                return cal['id']
+        
+        # Create new calendar
+        calendar = {
+            'summary': calendar_name,
+            'description': 'YouTube video deadlines and sponsor integration dates',
+            'timeZone': 'Asia/Ho_Chi_Minh'
+        }
+        
+        created_calendar = service.calendars().insert(body=calendar).execute()
+        print(f"Created new calendar: {calendar_name} (ID: {created_calendar['id']})")
+        return created_calendar['id']
+        
+    except HttpError as e:
+        print(f"Error with calendar: {e}")
+        return None
 
 
-def sync_video_deadlines(service, calendar_id='primary', days_ahead=30):
+def sync_video_deadlines(service, calendar_id, days_ahead=30):
     """Sync video due dates to Google Calendar."""
     conn = get_db()
     
@@ -97,14 +111,14 @@ def sync_video_deadlines(service, calendar_id='primary', days_ahead=30):
             'reminders': {
                 'useDefault': False,
                 'overrides': [
-                    {'method': 'email', 'minutes': 24 * 60},  # 1 day before
-                    {'method': 'popup', 'minutes': 60},       # 1 hour before
+                    {'method': 'email', 'minutes': 24 * 60},
+                    {'method': 'popup', 'minutes': 60},
                 ]
             }
         }
         
         try:
-            # Check if event exists (by extended properties)
+            # Check if event exists
             events_result = service.events().list(
                 calendarId=calendar_id,
                 privateExtendedProperty=f"dashboard_video_id={video['id']}",
@@ -116,7 +130,6 @@ def sync_video_deadlines(service, calendar_id='primary', days_ahead=30):
             existing = events_result.get('items', [])
             
             if existing:
-                # Update existing event
                 event_id = existing[0]['id']
                 service.events().update(
                     calendarId=calendar_id,
@@ -126,7 +139,6 @@ def sync_video_deadlines(service, calendar_id='primary', days_ahead=30):
                     }}
                 ).execute()
             else:
-                # Create new event
                 service.events().insert(
                     calendarId=calendar_id,
                     body={**event_body, 'extendedProperties': {
@@ -144,7 +156,7 @@ def sync_video_deadlines(service, calendar_id='primary', days_ahead=30):
     return synced
 
 
-def sync_sponsor_dates(service, calendar_id='primary', days_ahead=90):
+def sync_sponsor_dates(service, calendar_id, days_ahead=90):
     """Sync sponsor record/live dates to Google Calendar."""
     conn = get_db()
     
@@ -171,7 +183,6 @@ def sync_sponsor_dates(service, calendar_id='primary', days_ahead=90):
             if not date_val:
                 continue
             
-            # Skip if too far in future
             date_obj = datetime.strptime(date_val, '%Y-%m-%d')
             if date_obj > datetime.utcnow() + timedelta(days=days_ahead):
                 continue
@@ -186,13 +197,12 @@ def sync_sponsor_dates(service, calendar_id='primary', days_ahead=90):
                     'useDefault': False,
                     'overrides': [
                         {'method': 'email', 'minutes': 24 * 60},
-                        {'method': 'popup', 'minutes': 4 * 60},  # 4 hours before
+                        {'method': 'popup', 'minutes': 4 * 60},
                     ]
                 }
             }
             
             try:
-                # Check for existing
                 events_result = service.events().list(
                     calendarId=calendar_id,
                     privateExtendedProperty=f"dashboard_sponsor_id={sponsor['id']}_{field}",
@@ -230,77 +240,41 @@ def sync_sponsor_dates(service, calendar_id='primary', days_ahead=90):
     return synced
 
 
-def clear_synced_events(service, calendar_id='primary'):
-    """Remove all events created by dashboard sync."""
-    try:
-        # Get all events with dashboard properties
-        page_token = None
-        deleted = 0
-        
-        while True:
-            events_result = service.events().list(
-                calendarId=calendar_id,
-                privateExtendedProperty="dashboard_video_id=* OR dashboard_sponsor_id=*",
-                pageToken=page_token
-            ).execute()
-            
-            for event in events_result.get('items', []):
-                service.events().delete(
-                    calendarId=calendar_id,
-                    eventId=event['id']
-                ).execute()
-                deleted += 1
-            
-            page_token = events_result.get('nextPageToken')
-            if not page_token:
-                break
-        
-        print(f"Cleared {deleted} synced events")
-        return deleted
-        
-    except HttpError as e:
-        print(f"Error clearing events: {e}")
-        return 0
-
-
 def main():
     """Main entry point."""
     import argparse
     
     if not GOOGLE_API_AVAILABLE:
         print("Google API libraries not installed.")
-        print("Run: pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client")
+        print("Run: pip install google-auth google-api-python-client")
         return
     
     parser = argparse.ArgumentParser(description='Sync YouTube Dashboard to Google Calendar')
     parser.add_argument('--videos', action='store_true', help='Sync video deadlines')
     parser.add_argument('--sponsors', action='store_true', help='Sync sponsor dates')
     parser.add_argument('--all', action='store_true', help='Sync everything')
-    parser.add_argument('--clear', action='store_true', help='Clear all synced events')
     parser.add_argument('--days', type=int, default=30, help='Days ahead to sync')
-    parser.add_argument('--calendar', default='primary', help='Calendar ID')
+    parser.add_argument('--calendar', default='YouTube Production', help='Calendar name')
     
     args = parser.parse_args()
     
-    # Get credentials
-    creds = get_credentials()
-    if not creds:
+    service = get_calendar_service()
+    if not service:
         return
     
-    # Build service
-    service = build('calendar', 'v3', credentials=creds)
-    
-    if args.clear:
-        clear_synced_events(service, args.calendar)
+    calendar_id = get_or_create_calendar(service, args.calendar)
+    if not calendar_id:
         return
+    
+    print(f"\nSyncing to calendar: {args.calendar}\n")
     
     if args.all or args.videos:
-        sync_video_deadlines(service, args.calendar, args.days)
+        sync_video_deadlines(service, calendar_id, args.days)
     
     if args.all or args.sponsors:
-        sync_sponsor_dates(service, args.calendar, args.days * 3)  # Look further ahead for sponsors
+        sync_sponsor_dates(service, calendar_id, args.days * 3)
     
-    if not any([args.all, args.videos, args.sponsors, args.clear]):
+    if not any([args.all, args.videos, args.sponsors]):
         parser.print_help()
 
 
