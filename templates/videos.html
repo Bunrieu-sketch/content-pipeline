@@ -40,6 +40,11 @@
                          draggable="true"
                          ondragstart="drag(event, {{ video.id }})"
                          onclick="editVideo({{ video.id }})">
+                        {% if video.thumbnail_path %}
+                        <div class="card-thumbnail">
+                            <img src="/{{ video.thumbnail_path }}" alt="{{ video.title }}">
+                        </div>
+                        {% endif %}
                         <div class="card-title">{{ video.title }}</div>
                         {% if video.due_date %}
                         <div class="card-due {{ 'overdue' if video.due_date < today else 'upcoming' if video.due_date <= week_from_now else '' }}">

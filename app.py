@@ -243,7 +243,7 @@ def api_update_video(vid):
 
     fields = []
     values = []
-    for col in ("title", "stage", "due_date", "notes", "sponsor_id", "sort_order"):
+    for col in ("title", "stage", "due_date", "notes", "sponsor_id", "sort_order", "thumbnail_path"):
         if col in data:
             fields.append(f"{col} = ?")
             values.append(data[col] if data[col] != "" else None)
