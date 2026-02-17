@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
@@ -37,34 +39,57 @@ body {
 
 /* Stats */
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
-.stat-card {
-  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-  padding: 20px; text-align: center;
+.stat-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
 }
-.stat-card .value { font-size: 32px; font-weight: 700; color: var(--accent); }
-.stat-card .label { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+.stat-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 16px 18px; display: flex; flex-direction: column; gap: 6px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.stat-card:hover { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(163,113,247,0.15); }
+.stat-card .stat-icon {
+  width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  margin-bottom: 4px; flex-shrink: 0;
+}
+.stat-card .value { font-size: 26px; font-weight: 700; color: var(--text); white-space: nowrap; letter-spacing: -0.02em; }
+.stat-card .label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
 
 /* Kanban */
-.kanban { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 16px; }
+.kanban { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 12px; }
 .kanban-column {
-  min-width: 240px; width: 240px; background: var(--card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 16px; flex-shrink: 0;
+  min-width: 210px; width: 210px; background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px; flex-shrink: 0;
 }
 .kanban-column h3 {
-  font-size: 13px; text-transform: uppercase; color: var(--text-muted);
-  margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em;
+  margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+  padding-bottom: 8px; border-bottom: 1px solid var(--border); font-weight: 600;
+}
+.kanban-column h3 .stage-dot {
+  width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; flex-shrink: 0;
 }
 .kanban-column h3 .count {
-  background: var(--bg); padding: 2px 8px; border-radius: 10px; font-size: 12px;
+  background: var(--bg); padding: 2px 7px; border-radius: 10px; font-size: 10px; font-weight: 700;
+  color: var(--text-muted);
 }
 .kanban-card {
   background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-  padding: 12px; margin-bottom: 8px; cursor: grab; font-size: 14px;
-  transition: border-color 0.15s;
+  padding: 10px 12px; margin-bottom: 8px; cursor: grab; font-size: 13px;
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
 }
-.kanban-card:hover { border-color: var(--accent); }
+.kanban-card:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.kanban-card .card-brand { font-weight: 700; font-size: 13px; color: var(--text); margin-bottom: 2px; }
+.kanban-card .card-badge {
+  display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 99px;
+  margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em;
+}
+.kanban-card .card-badge.flat_rate { background: rgba(88,166,255,0.15); color: var(--blue); }
+.kanban-card .card-badge.cpm { background: rgba(163,113,247,0.15); color: var(--accent); }
+.kanban-card .card-badge.full_video { background: rgba(63,185,80,0.15); color: var(--green); }
+.kanban-card .card-value { font-size: 15px; font-weight: 700; color: var(--green); margin-bottom: 4px; }
 .kanban-card .card-title { font-weight: 600; margin-bottom: 4px; }
-.kanban-card .card-meta { font-size: 12px; color: var(--text-muted); }
+.kanban-card .card-meta { font-size: 11px; color: var(--text-muted); }
 .kanban-card.dragging { opacity: 0.5; }
 .kanban-column.drag-over { border-color: var(--accent); background: rgba(163,113,247,0.05); }
 
