@@ -17,11 +17,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const body = await req.json().catch(() => ({}));
   const db = ensureSponsorsV2();
 
-  const row = db.prepare('SELECT * FROM sponsors_v2 WHERE id=?').get(id);
+  const row = db.prepare('SELECT * FROM sponsors_v2 WHERE id=?').get(id) as any;
   if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const currentIndex = SPONSOR_V2_STAGES.indexOf(row.stage);
-  let targetStage = body.stage || SPONSOR_V2_STAGES[Math.min(currentIndex + 1, SPONSOR_V2_STAGES.length - 1)];
+  let targetStage = (body as any).stage || SPONSOR_V2_STAGES[Math.min(currentIndex + 1, SPONSOR_V2_STAGES.length - 1)];
   if (!SPONSOR_V2_STAGES.includes(targetStage)) {
     return NextResponse.json({ error: 'Invalid stage' }, { status: 400 });
   }

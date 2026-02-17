@@ -54,7 +54,7 @@ const ALLOWED_UPDATE = [
 export function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return params.then(({ id }) => {
     const db = ensureSponsorsV2();
-    const row = db.prepare('SELECT * FROM sponsors_v2 WHERE id=?').get(id);
+    const row = db.prepare('SELECT * FROM sponsors_v2 WHERE id=?').get(id) as any;
     if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(row);
   });
@@ -62,10 +62,10 @@ export function GET(_req: NextRequest, { params }: { params: Promise<{ id: strin
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const body = await req.json();
+  const body = await req.json() as any;
   const db = ensureSponsorsV2();
 
-  const row = db.prepare('SELECT * FROM sponsors_v2 WHERE id=?').get(id);
+  const row = db.prepare('SELECT * FROM sponsors_v2 WHERE id=?').get(id) as any;
   if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const fields: string[] = [];
