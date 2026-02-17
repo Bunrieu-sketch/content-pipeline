@@ -585,21 +585,33 @@ export default function SponsorsV2Page() {
                       {DEAL_TYPE_LABELS[s.deal_type] || s.deal_type}
                     </span>
                     <div className="card-value">
-                      ${Number(s.deal_value_net || 0).toLocaleString()}
-                      {s.deal_type === 'cpm' && <span className="text-[10px] opacity-50 ml-1">net</span>}
+                      {s.deal_type === 'cpm' && Number(s.invoice_amount) > 0 && ['published','invoiced','paid'].includes(s.stage) ? (
+                        <>
+                          ${Number(s.invoice_amount).toLocaleString()}
+                          <span className="text-[10px] opacity-50 ml-1">actual</span>
+                          <div className="text-[10px] opacity-40">cap: ${Number(s.deal_value_net).toLocaleString()}</div>
+                        </>
+                      ) : (
+                        <>
+                          ${Number(s.deal_value_net || 0).toLocaleString()}
+                          {s.deal_type === 'cpm' && <span className="text-[10px] opacity-50 ml-1">net cap</span>}
+                        </>
+                      )}
                     </div>
                     {deadline && (
-                      <div
-                        className={`card-meta mt-1 flex items-center gap-2 ${
-                          urgency === 'overdue'
-                            ? 'text-[var(--red)]'
-                            : urgency === 'soon'
-                              ? 'text-[var(--yellow)]'
-                              : 'text-[var(--text-muted)]'
-                        }`}
-                      >
-                        <Calendar size={12} />
-                        {deadline.label}: {formatDate(deadline.date)}
+                      <div className="mt-2 pt-1.5 border-t border-[var(--border)]">
+                        <span
+                          className={`inline-flex items-center gap-1.5 text-[13px] font-semibold bg-[var(--border)] rounded px-1.5 py-0.5 ${
+                            urgency === 'overdue'
+                              ? 'text-[var(--red)]'
+                              : urgency === 'soon'
+                                ? 'text-[var(--yellow)]'
+                                : 'text-[var(--text-muted)]'
+                          }`}
+                        >
+                          <Calendar size={13} />
+                          {deadline.label}: {formatDate(deadline.date)}
+                        </span>
                       </div>
                     )}
                     {s.next_action && (
