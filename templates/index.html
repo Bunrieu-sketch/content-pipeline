@@ -1,22 +1,60 @@
 {% extends "base.html" %}
-{% block title %}Video Pipeline{% endblock %}
+{% block title %}Overview — Content Pipeline{% endblock %}
 {% block content %}
 <div class="page-header">
   <div>
-    <h1>Video Pipeline</h1>
-    <p class="subtitle">Track videos from idea to publish</p>
+    <h1>Overview</h1>
+    <p class="subtitle">Content pipeline at a glance</p>
   </div>
 </div>
 
-<section class="board" id="board">
-  {% for stage in stages %}
-  <div class="column" data-stage="{{ stage }}">
-    <div class="column-header">
-      <h3>{{ stage.replace("-", " ").replace("_", " ").title() }}</h3>
-      <span class="count" data-count="{{ stage }}">0</span>
+<!-- Stats Cards -->
+<div class="stats-grid" id="statsGrid">
+  <div class="stat-card">
+    <div class="stat-icon"><i data-lucide="video"></i></div>
+    <div class="stat-info">
+      <span class="stat-value" id="statTotalVideos">—</span>
+      <span class="stat-label">Total Videos</span>
     </div>
-    <div class="column-body" data-dropzone="{{ stage }}"></div>
   </div>
-  {% endfor %}
+  <div class="stat-card">
+    <div class="stat-icon green"><i data-lucide="check-circle"></i></div>
+    <div class="stat-info">
+      <span class="stat-value" id="statPublished">—</span>
+      <span class="stat-label">Published</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon purple"><i data-lucide="users"></i></div>
+    <div class="stat-info">
+      <span class="stat-value" id="statActiveSponsors">—</span>
+      <span class="stat-label">Active Sponsors</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon gold"><i data-lucide="dollar-sign"></i></div>
+    <div class="stat-info">
+      <span class="stat-value" id="statPipelineValue">—</span>
+      <span class="stat-label">Pipeline Value</span>
+    </div>
+  </div>
+</div>
+
+<!-- Deadlines -->
+<section class="dashboard-section" id="deadlinesSection" style="display:none;">
+  <h2><i data-lucide="clock"></i> Upcoming Deadlines</h2>
+  <div class="deadlines-list" id="deadlinesList"></div>
 </section>
+
+<!-- Pipeline Summaries -->
+<div class="pipelines-row">
+  <section class="dashboard-section">
+    <h2><i data-lucide="video"></i> Video Pipeline</h2>
+    <div class="pipeline-bars" id="videoPipelineBars"></div>
+  </section>
+  <section class="dashboard-section">
+    <h2><i data-lucide="handshake"></i> Sponsor Pipeline</h2>
+    <div class="pipeline-bars" id="sponsorPipelineBars"></div>
+  </section>
+</div>
 {% endblock %}

@@ -248,6 +248,78 @@ if (syncBtn) {
   });
 }
 
+/* ── OVERVIEW DASHBOARD PAGE ───────────────────── */
+if ($('#statsGrid') && !$('#board') && !$('#sponsorBoard')) {
+  const VIDEO_STAGES = ['idea','pre-production','filming','post-production','ready','published'];
+  const SPONSOR_STAGES = ['inquiry','negotiation','contract','content','delivered','live','paid'];
+  const STAGE_COLORS = { published: 'green', live: 'green', paid: 'yellow' };
+
+  async function loadDashboard() {
+    const [stats, deadlines] = await Promise.all([api('/api/stats'), api('/api/deadlines')]);
+
+    $('#statTotalVideos').textContent = stats.total_videos;
+    $('#statPublished').textContent = stats.published;
+    $('#statActiveSponsors').textContent = stats.active_sponsors;
+    $('#statPipelineValue').textContent = '$' + Number(stats.pipeline_value).toLocaleString();
+
+    // Video pipeline bars
+    const vMax = Math.max(1, ...VIDEO_STAGES.map(s => stats.video_stages[s] || 0));
+    $('#videoPipelineBars').innerHTML = VIDEO_STAGES.map(s => {
+      const c = stats.video_stages[s] || 0;
+      const pct = (c / vMax * 100).toFixed(0);
+      const cls = STAGE_COLORS[s] || '';
+      return `<div class="pipeline-bar-row">
+        <span class="pipeline-bar-label">${s.replace(/-/g,' ')}</span>
+        <div class="pipeline-bar-track"><div class="pipeline-bar-fill ${cls}" style="width:${pct}%"></div></div>
+        <span class="pipeline-bar-count">${c}</span>
+      </div>`;
+    }).join('');
+
+    // Sponsor pipeline bars
+    const sMax = Math.max(1, ...SPONSOR_STAGES.map(s => stats.sponsor_stages[s] || 0));
+    $('#sponsorPipelineBars').innerHTML = SPONSOR_STAGES.map(s => {
+      const c = stats.sponsor_stages[s] || 0;
+      const pct = (c / sMax * 100).toFixed(0);
+      const cls = STAGE_COLORS[s] || '';
+      return `<div class="pipeline-bar-row">
+        <span class="pipeline-bar-label">${s}</span>
+        <div class="pipeline-bar-track"><div class="pipeline-bar-fill ${cls}" style="width:${pct}%"></div></div>
+        <span class="pipeline-bar-count">${c}</span>
+      </div>`;
+    }).join('');
+
+    // Deadlines
+    if (deadlines.length) {
+      $('#deadlinesSection').style.display = '';
+      $('#deadlinesList').innerHTML = deadlines.map(d => {
+        const items = [];
+        if (d.script_due) items.push({ type: 'Script Due', date: d.script_due });
+        if (d.record_date) items.push({ type: 'Record', date: d.record_date });
+        if (d.brand_approval_deadline) items.push({ type: 'Approval', date: d.brand_approval_deadline });
+        return items.map(i => `<div class="deadline-item">
+          <span class="deadline-type">${i.type}</span>
+          <span class="deadline-brand">${esc(d.brand_name)}</span>
+          <span class="deadline-date">${i.date}</span>
+        </div>`).join('');
+      }).join('');
+    }
+
+    lucide.createIcons();
+  }
+  loadDashboard();
+}
+
+/* ── SPONSOR STATS HEADER ──────────────────────── */
+if ($('#sponsorStats')) {
+  api('/api/stats').then(s => {
+    $('#sTotalDeals').textContent = s.total_sponsors;
+    $('#sActiveDeals').textContent = s.active_sponsors;
+    $('#sLiveDeals').textContent = s.live_deals;
+    $('#sPaidDeals').textContent = s.paid_deals;
+    $('#sPipelineValue').textContent = '$' + Number(s.pipeline_value).toLocaleString();
+  });
+}
+
 /* ── Util ──────────────────────────────────────── */
 function esc(s) {
   const d = document.createElement('div');

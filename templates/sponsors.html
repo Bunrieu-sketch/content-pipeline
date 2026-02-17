@@ -11,6 +11,24 @@
   </div>
 </div>
 
+<div class="stats-grid stats-grid-5" id="sponsorStats">
+  <div class="stat-card sm">
+    <div class="stat-info"><span class="stat-value" id="sTotalDeals">—</span><span class="stat-label">Total Deals</span></div>
+  </div>
+  <div class="stat-card sm">
+    <div class="stat-info"><span class="stat-value" id="sActiveDeals">—</span><span class="stat-label">Active</span></div>
+  </div>
+  <div class="stat-card sm">
+    <div class="stat-info"><span class="stat-value" id="sLiveDeals">—</span><span class="stat-label">Live</span></div>
+  </div>
+  <div class="stat-card sm">
+    <div class="stat-info"><span class="stat-value" id="sPaidDeals">—</span><span class="stat-label">Paid</span></div>
+  </div>
+  <div class="stat-card sm">
+    <div class="stat-info"><span class="stat-value green" id="sPipelineValue">—</span><span class="stat-label">Pipeline Value</span></div>
+  </div>
+</div>
+
 <section class="board" id="sponsorBoard">
   {% for stage in stages %}
   <div class="column" data-stage="{{ stage }}">

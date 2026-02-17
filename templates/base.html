@@ -17,6 +17,10 @@
     </div>
     <nav class="sidebar-nav">
       <a href="/" class="nav-item {% if request.path == '/' %}active{% endif %}">
+        <i data-lucide="layout-dashboard"></i>
+        <span>Overview</span>
+      </a>
+      <a href="/videos" class="nav-item {% if request.path == '/videos' %}active{% endif %}">
         <i data-lucide="kanban"></i>
         <span>Video Pipeline</span>
       </a>

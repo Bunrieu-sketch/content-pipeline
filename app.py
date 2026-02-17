@@ -33,7 +33,12 @@ def close_db(exc):
 
 @app.route("/")
 def index():
-    return render_template("index.html", stages=STAGES)
+    return render_template("index.html")
+
+
+@app.route("/videos")
+def videos_page():
+    return render_template("videos.html", stages=STAGES)
 
 
 @app.route("/sponsors")
@@ -210,6 +215,51 @@ def update_sponsor(sponsor_id: int):
     db.commit()
     updated = db.execute("SELECT * FROM sponsors WHERE id=?", (sponsor_id,)).fetchone()
     return jsonify({"status": "ok", "sponsor": dict(updated)})
+
+
+# ── Stats & Deadlines API ───────────────────────
+
+@app.route("/api/stats", methods=["GET"])
+def get_stats():
+    db = get_db()
+    total_videos = db.execute("SELECT COUNT(*) FROM videos").fetchone()[0]
+    published = db.execute("SELECT COUNT(*) FROM videos WHERE stage='published'").fetchone()[0]
+    active_sponsors = db.execute("SELECT COUNT(*) FROM sponsors WHERE status NOT IN ('paid')").fetchone()[0]
+    total_sponsors = db.execute("SELECT COUNT(*) FROM sponsors").fetchone()[0]
+    pipeline_value = db.execute(
+        "SELECT COALESCE(SUM(deal_value),0) FROM sponsors WHERE status IN ('inquiry','negotiation','contract','content','delivered')"
+    ).fetchone()[0]
+    live_deals = db.execute("SELECT COUNT(*) FROM sponsors WHERE status='live'").fetchone()[0]
+    paid_deals = db.execute("SELECT COUNT(*) FROM sponsors WHERE status='paid'").fetchone()[0]
+
+    video_stages = dict(db.execute("SELECT stage, COUNT(*) FROM videos GROUP BY stage").fetchall())
+    sponsor_stages = dict(db.execute("SELECT status, COUNT(*) FROM sponsors GROUP BY status").fetchall())
+
+    return jsonify({
+        "total_videos": total_videos,
+        "published": published,
+        "active_sponsors": active_sponsors,
+        "total_sponsors": total_sponsors,
+        "pipeline_value": pipeline_value,
+        "live_deals": live_deals,
+        "paid_deals": paid_deals,
+        "video_stages": video_stages,
+        "sponsor_stages": sponsor_stages,
+    })
+
+
+@app.route("/api/deadlines", methods=["GET"])
+def get_deadlines():
+    db = get_db()
+    rows = db.execute("""
+        SELECT id, brand_name, deal_value, status, script_due, record_date, brand_approval_deadline
+        FROM sponsors
+        WHERE script_due BETWEEN date('now') AND date('now', '+14 days')
+           OR record_date BETWEEN date('now') AND date('now', '+14 days')
+           OR brand_approval_deadline BETWEEN date('now') AND date('now', '+14 days')
+        ORDER BY COALESCE(script_due, record_date, brand_approval_deadline)
+    """).fetchall()
+    return jsonify([dict(r) for r in rows])
 
 
 if __name__ == "__main__":
