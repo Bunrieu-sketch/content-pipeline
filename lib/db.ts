@@ -10,6 +10,12 @@ export function getDb(): Database.Database {
     db = new Database(DB_PATH);
     db.pragma('journal_mode = WAL');
     db.pragma('foreign_keys = ON');
+
+    // Migrations
+    const cols = db.prepare("PRAGMA table_info(videos)").all() as { name: string }[];
+    if (!cols.find(c => c.name === 'youtube_video_id')) {
+      db.exec("ALTER TABLE videos ADD COLUMN youtube_video_id TEXT DEFAULT ''");
+    }
   }
   return db;
 }

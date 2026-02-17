@@ -15,11 +15,14 @@ export function Sidebar() {
   return (
     <nav className="sidebar">
       <h2>📹 Sponsor CRM</h2>
-      {links.map(({ href, label, icon: Icon }) => (
-        <Link key={href} href={href} className={pathname === href ? 'active' : ''}>
-          <Icon size={16} /> {label}
-        </Link>
-      ))}
+      {links.map(({ href, label, icon: Icon }) => {
+        const isActive = href === '/' ? pathname === '/' : pathname.startsWith(href);
+        return (
+          <Link key={href} href={href} className={isActive ? 'active' : ''}>
+            <Icon size={16} /> {label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

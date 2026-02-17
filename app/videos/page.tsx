@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Trash2 } from 'lucide-react';
 
-interface Video { id: number; title: string; stage: string; notes: string; due_date: string | null; }
+interface Video { id: number; title: string; stage: string; notes: string; due_date: string | null; thumbnail_path: string | null; youtube_video_id: string | null; }
 const STAGES = ['idea', 'pre-production', 'filming', 'post-production', 'ready', 'published'];
 
 export default function VideosPage() {
@@ -55,10 +55,31 @@ export default function VideosPage() {
             <div key={stage} className="kanban-column" onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={e => onDrop(e, stage)}>
               <h3>{stage.replace(/-/g, ' ')} <span className="count">{items.length}</span></h3>
               {items.map(v => (
-                <div key={v.id} className="kanban-card" draggable onDragStart={e => onDragStart(e, v.id)} onDragEnd={onDragEnd}>
-                  <div className="card-title">{v.title}</div>
-                  {v.due_date && <div className="card-meta">Due: {v.due_date}</div>}
-                  <button className="btn btn-danger btn-sm" style={{ marginTop: 6 }} onClick={() => remove(v.id)}><Trash2 size={12} /></button>
+                <div key={v.id} className="kanban-card relative group" draggable onDragStart={e => onDragStart(e, v.id)} onDragEnd={onDragEnd}
+                  style={{ transition: 'box-shadow 0.15s, transform 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.12)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = ''; (e.currentTarget as HTMLElement).style.transform = ''; }}
+                >
+                  {v.stage === 'published' && v.youtube_video_id ? (
+                    <img src={`https://img.youtube.com/vi/${v.youtube_video_id}/mqdefault.jpg`} alt="" style={{ width: '100%', borderRadius: 4, marginBottom: 6 }} />
+                  ) : v.thumbnail_path ? (
+                    <img src={`/thumbnails/${v.thumbnail_path}`} alt="" style={{ width: '100%', borderRadius: 4, marginBottom: 6 }} />
+                  ) : null}
+                  <div className="card-title" style={{ fontWeight: 600 }}>{v.title}</div>
+                  {v.due_date && (
+                    <div className="card-meta" style={{ marginTop: 4 }}>
+                      <span style={{ background: 'var(--border)', borderRadius: 4, padding: '2px 6px', fontSize: 13, fontWeight: 500 }}>
+                        Publish goal: {v.due_date}
+                      </span>
+                    </div>
+                  )}
+                  <button
+                    className="absolute top-1 right-1 opacity-0 group-hover:opacity-70 hover:!opacity-100 transition-opacity"
+                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 2 }}
+                    onClick={() => remove(v.id)}
+                  >
+                    <Trash2 size={10} />
+                  </button>
                 </div>
               ))}
             </div>
