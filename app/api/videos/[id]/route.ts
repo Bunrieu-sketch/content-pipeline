@@ -19,6 +19,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (body.notes !== undefined) { fields.push('notes=?'); vals.push(body.notes); }
   if (body.due_date !== undefined) { fields.push('due_date=?'); vals.push(body.due_date); }
   if (body.youtube_video_id !== undefined) { fields.push('youtube_video_id=?'); vals.push(body.youtube_video_id); }
+  if (body.view_count !== undefined) { fields.push('view_count=?'); vals.push(body.view_count); }
+  if (body.outlier_score !== undefined) { fields.push('outlier_score=?'); vals.push(body.outlier_score); }
 
   if (fields.length === 0) return NextResponse.json({ error: 'No fields' }, { status: 400 });
 

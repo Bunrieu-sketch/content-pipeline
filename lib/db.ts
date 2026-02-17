@@ -16,6 +16,12 @@ export function getDb(): Database.Database {
     if (!cols.find(c => c.name === 'youtube_video_id')) {
       db.exec("ALTER TABLE videos ADD COLUMN youtube_video_id TEXT DEFAULT ''");
     }
+    if (!cols.find(c => c.name === 'view_count')) {
+      db.exec("ALTER TABLE videos ADD COLUMN view_count INTEGER DEFAULT 0");
+    }
+    if (!cols.find(c => c.name === 'outlier_score')) {
+      db.exec("ALTER TABLE videos ADD COLUMN outlier_score REAL DEFAULT 0");
+    }
   }
   return db;
 }
