@@ -1,70 +1,52 @@
-"""Flask web app for the YouTube Content Pipeline tracker."""
+"""Flask web app for the YouTube Content Pipeline tracker — SQLite backend."""
 from __future__ import annotations
 
-import json
+import os
+import sqlite3
 from pathlib import Path
-from typing import List, TypedDict
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, g, jsonify, render_template, request
 
-
-STAGES = ["idea", "pre-production", "post-production", "published"]
-DATA_FILE = Path(__file__).resolve().parent / "content-pipeline.json"
-
-
-class VideoEntry(TypedDict):
-    title: str
-    stage: str
-
-
-def load_data(path: Path) -> List[VideoEntry]:
-    if not path.exists():
-        return []
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return []
-    if not isinstance(data, list):
-        return []
-    entries: List[VideoEntry] = []
-    for item in data:
-        if (
-            isinstance(item, dict)
-            and isinstance(item.get("title"), str)
-            and isinstance(item.get("stage"), str)
-        ):
-            entries.append({"title": item["title"], "stage": item["stage"]})
-    return entries
-
-
-def save_data(path: Path, entries: List[VideoEntry]) -> None:
-    path.write_text(json.dumps(entries, indent=2, ensure_ascii=True), encoding="utf-8")
-
-
-def normalize_title(title: str) -> str:
-    return title.strip().lower()
-
-
-def find_entry(entries: List[VideoEntry], title: str) -> VideoEntry | None:
-    normalized = normalize_title(title)
-    for entry in entries:
-        if normalize_title(entry["title"]) == normalized:
-            return entry
-    return None
-
+STAGES = ["idea", "pre-production", "filming", "post-production", "ready", "published"]
+SPONSOR_STAGES = ["inquiry", "negotiation", "contract", "content", "delivered", "live", "paid"]
+DB_PATH = Path(__file__).resolve().parent / "dashboard.db"
 
 app = Flask(__name__)
 
+
+def get_db() -> sqlite3.Connection:
+    if "db" not in g:
+        g.db = sqlite3.connect(DB_PATH)
+        g.db.row_factory = sqlite3.Row
+        g.db.execute("PRAGMA foreign_keys = ON")
+    return g.db
+
+
+@app.teardown_appcontext
+def close_db(exc):
+    db = g.pop("db", None)
+    if db:
+        db.close()
+
+
+# ── Pages ───────────────────────────────────────
 
 @app.route("/")
 def index():
     return render_template("index.html", stages=STAGES)
 
 
+@app.route("/sponsors")
+def sponsors_page():
+    return render_template("sponsors.html", stages=SPONSOR_STAGES)
+
+
+# ── Videos API ──────────────────────────────────
+
 @app.route("/api/videos", methods=["GET"])
 def list_videos():
-    entries = load_data(DATA_FILE)
-    return jsonify(entries)
+    rows = get_db().execute("SELECT * FROM videos ORDER BY id").fetchall()
+    return jsonify([dict(r) for r in rows])
 
 
 @app.route("/api/videos", methods=["POST"])
@@ -76,12 +58,13 @@ def add_video():
         return jsonify({"error": "Title is required."}), 400
     if stage not in STAGES:
         return jsonify({"error": "Invalid stage."}), 400
-    entries = load_data(DATA_FILE)
-    if find_entry(entries, title):
+    db = get_db()
+    if db.execute("SELECT 1 FROM videos WHERE LOWER(title)=LOWER(?)", (title,)).fetchone():
         return jsonify({"error": "Video already exists."}), 409
-    entries.append({"title": title, "stage": stage})
-    save_data(DATA_FILE, entries)
-    return jsonify({"status": "ok", "video": {"title": title, "stage": stage}}), 201
+    cur = db.execute("INSERT INTO videos (title, stage) VALUES (?, ?)", (title, stage))
+    db.commit()
+    row = db.execute("SELECT * FROM videos WHERE id=?", (cur.lastrowid,)).fetchone()
+    return jsonify({"status": "ok", "video": dict(row)}), 201
 
 
 @app.route("/api/videos/<path:title>", methods=["PUT"])
@@ -90,25 +73,144 @@ def update_video(title: str):
     stage = str(payload.get("stage", "")).strip()
     if stage not in STAGES:
         return jsonify({"error": "Invalid stage."}), 400
-    entries = load_data(DATA_FILE)
-    entry = find_entry(entries, title)
-    if not entry:
+    db = get_db()
+    row = db.execute("SELECT * FROM videos WHERE LOWER(title)=LOWER(?)", (title,)).fetchone()
+    if not row:
         return jsonify({"error": "Video not found."}), 404
-    entry["stage"] = stage
-    save_data(DATA_FILE, entries)
-    return jsonify({"status": "ok", "video": entry})
+    db.execute("UPDATE videos SET stage=?, updated_at=CURRENT_TIMESTAMP WHERE id=?", (stage, row["id"]))
+    db.commit()
+    updated = db.execute("SELECT * FROM videos WHERE id=?", (row["id"],)).fetchone()
+    return jsonify({"status": "ok", "video": dict(updated)})
 
 
 @app.route("/api/videos/<path:title>", methods=["DELETE"])
 def delete_video(title: str):
-    entries = load_data(DATA_FILE)
-    entry = find_entry(entries, title)
-    if not entry:
+    db = get_db()
+    row = db.execute("SELECT * FROM videos WHERE LOWER(title)=LOWER(?)", (title,)).fetchone()
+    if not row:
         return jsonify({"error": "Video not found."}), 404
-    entries = [e for e in entries if normalize_title(e["title"]) != normalize_title(title)]
-    save_data(DATA_FILE, entries)
+    db.execute("DELETE FROM videos WHERE id=?", (row["id"],))
+    db.commit()
     return jsonify({"status": "ok"})
 
 
+# ── YouTube Sync ────────────────────────────────
+
+@app.route("/api/videos/sync", methods=["POST"])
+def sync_youtube():
+    api_key = os.environ.get("YOUTUBE_API_KEY")
+    if not api_key:
+        return jsonify({"error": "YOUTUBE_API_KEY not configured"}), 500
+
+    try:
+        from googleapiclient.discovery import build
+        yt = build("youtube", "v3", developerKey=api_key)
+
+        # Resolve channel ID for @Andrew_Fraser
+        ch_resp = yt.search().list(part="snippet", q="@Andrew_Fraser", type="channel", maxResults=1).execute()
+        items = ch_resp.get("items", [])
+        if not items:
+            return jsonify({"error": "Channel not found"}), 404
+        channel_id = items[0]["snippet"]["channelId"]
+
+        # Get uploads playlist
+        ch_detail = yt.channels().list(part="contentDetails", id=channel_id).execute()
+        uploads_id = ch_detail["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
+
+        # Fetch recent videos
+        pl_resp = yt.playlistItems().list(part="snippet,contentDetails", playlistId=uploads_id, maxResults=50).execute()
+
+        db = get_db()
+        imported = 0
+        for item in pl_resp.get("items", []):
+            snip = item["snippet"]
+            vid_id = snip["resourceId"]["videoId"]
+            title = snip["title"]
+            pub_date = snip["publishedAt"][:10]
+
+            exists = db.execute("SELECT 1 FROM videos WHERE youtube_video_id=?", (vid_id,)).fetchone()
+            if exists:
+                continue
+
+            # Also check by title
+            exists2 = db.execute("SELECT 1 FROM videos WHERE LOWER(title)=LOWER(?)", (title,)).fetchone()
+            if exists2:
+                db.execute("UPDATE videos SET youtube_video_id=?, publish_date=? WHERE LOWER(title)=LOWER(?)",
+                           (vid_id, pub_date, title))
+                db.commit()
+                continue
+
+            db.execute(
+                "INSERT INTO videos (title, stage, youtube_video_id, publish_date) VALUES (?, 'published', ?, ?)",
+                (title, vid_id, pub_date),
+            )
+            imported += 1
+
+        # Fetch view counts for all synced videos
+        all_vid_ids = [r["youtube_video_id"] for r in db.execute("SELECT youtube_video_id FROM videos WHERE youtube_video_id IS NOT NULL").fetchall()]
+        for i in range(0, len(all_vid_ids), 50):
+            batch = all_vid_ids[i:i+50]
+            stats = yt.videos().list(part="statistics", id=",".join(batch)).execute()
+            for sv in stats.get("items", []):
+                views = int(sv["statistics"].get("viewCount", 0))
+                db.execute("UPDATE videos SET views=? WHERE youtube_video_id=?", (views, sv["id"]))
+
+        db.commit()
+        return jsonify({"status": "ok", "imported": imported})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ── Sponsors API ────────────────────────────────
+
+@app.route("/api/sponsors", methods=["GET"])
+def list_sponsors():
+    rows = get_db().execute("SELECT * FROM sponsors ORDER BY id").fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
+@app.route("/api/sponsors", methods=["POST"])
+def add_sponsor():
+    p = request.get_json(silent=True) or {}
+    brand = str(p.get("brand_name", "")).strip()
+    status = str(p.get("status", "inquiry")).strip()
+    if not brand:
+        return jsonify({"error": "brand_name is required."}), 400
+    db = get_db()
+    cur = db.execute(
+        "INSERT INTO sponsors (brand_name, contact_email, deal_value, status, inquiry_date, payment_due_date, notes) VALUES (?,?,?,?,?,?,?)",
+        (brand, p.get("contact_email"), p.get("deal_value"), status, p.get("inquiry_date"), p.get("payment_due_date"), p.get("notes")),
+    )
+    db.commit()
+    row = db.execute("SELECT * FROM sponsors WHERE id=?", (cur.lastrowid,)).fetchone()
+    return jsonify({"status": "ok", "sponsor": dict(row)}), 201
+
+
+@app.route("/api/sponsors/<int:sponsor_id>", methods=["PUT"])
+def update_sponsor(sponsor_id: int):
+    p = request.get_json(silent=True) or {}
+    db = get_db()
+    row = db.execute("SELECT * FROM sponsors WHERE id=?", (sponsor_id,)).fetchone()
+    if not row:
+        return jsonify({"error": "Sponsor not found."}), 404
+
+    # Update only provided fields
+    fields = {}
+    for col in ["brand_name", "contact_email", "deal_value", "status", "payment_due_date", "notes"]:
+        if col in p:
+            fields[col] = p[col]
+
+    if not fields:
+        return jsonify({"error": "No fields to update."}), 400
+
+    set_clause = ", ".join(f"{k}=?" for k in fields)
+    vals = list(fields.values()) + [sponsor_id]
+    db.execute(f"UPDATE sponsors SET {set_clause}, updated_at=CURRENT_TIMESTAMP WHERE id=?", vals)
+    db.commit()
+    updated = db.execute("SELECT * FROM sponsors WHERE id=?", (sponsor_id,)).fetchone()
+    return jsonify({"status": "ok", "sponsor": dict(updated)})
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5050)

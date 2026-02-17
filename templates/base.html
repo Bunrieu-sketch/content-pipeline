@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Content Pipeline{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <i data-lucide="play-circle"></i>
+      <span>Pipeline</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/" class="nav-item {% if request.path == '/' %}active{% endif %}">
+        <i data-lucide="kanban"></i>
+        <span>Video Pipeline</span>
+      </a>
+      <a href="/sponsors" class="nav-item {% if request.path == '/sponsors' %}active{% endif %}">
+        <i data-lucide="handshake"></i>
+        <span>Sponsor CRM</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="syncYouTube" class="sync-btn">
+        <i data-lucide="refresh-cw"></i>
+        <span>Sync YouTube</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <script src="/static/app.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Sponsor CRM{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Sponsor CRM</h1>
+    <p class="subtitle">Manage brand deals and payments</p>
+  </div>
+  <div class="header-actions">
+    <button id="addSponsorBtn" class="btn-primary"><i data-lucide="plus"></i> New Deal</button>
+  </div>
+</div>
+
+<section class="board" id="sponsorBoard">
+  {% for stage in stages %}
+  <div class="column" data-stage="{{ stage }}">
+    <div class="column-header">
+      <h3>{{ stage.replace("_", " ").title() }}</h3>
+      <span class="count" data-count="{{ stage }}">0</span>
+    </div>
+    <div class="column-body" data-dropzone="{{ stage }}"></div>
+  </div>
+  {% endfor %}
+</section>
+
+<!-- Add/Edit Sponsor Modal -->
+<div id="sponsorModal" class="modal" aria-hidden="true">
+  <div class="modal-card" role="dialog">
+    <header>
+      <h3 id="sponsorModalTitle">New Sponsor Deal</h3>
+      <button class="close" id="closeSponsorModal" aria-label="Close"><i data-lucide="x"></i></button>
+    </header>
+    <form id="sponsorForm">
+      <input type="hidden" name="id" />
+      <label>Brand Name <input type="text" name="brand_name" required /></label>
+      <label>Contact Email <input type="email" name="contact_email" /></label>
+      <label>Deal Value ($) <input type="number" name="deal_value" step="0.01" /></label>
+      <label>Status
+        <select name="status">
+          {% for s in stages %}<option value="{{ s }}">{{ s.replace("_"," ").title() }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Payment Due Date <input type="date" name="payment_due_date" /></label>
+      <label>Notes <textarea name="notes" rows="3"></textarea></label>
+      <footer class="modal-actions">
+        <button type="button" class="btn-secondary" id="cancelSponsorModal">Cancel</button>
+        <button type="submit" class="btn-primary">Save</button>
+      </footer>
+    </form>
+  </div>
+</div>
+{% endblock %}

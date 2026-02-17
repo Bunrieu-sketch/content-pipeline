@@ -1,70 +1,22 @@
-<!doctype html>
-<html lang="en" data-theme="dark">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Content Pipeline</title>
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/@picocss/pico@2/css/pico.min.css"
-    />
-    <link rel="stylesheet" href="/static/style.css" />
-  </head>
-  <body>
-    <main class="container">
-      <header class="page-header">
-        <div>
-          <h1>Content Pipeline</h1>
-          <p class="subtitle">Track your videos from idea to publish.</p>
-        </div>
-        <div class="header-actions">
-          <button id="openModal" class="contrast">Add New Video</button>
-        </div>
-      </header>
+{% extends "base.html" %}
+{% block title %}Video Pipeline{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Video Pipeline</h1>
+    <p class="subtitle">Track videos from idea to publish</p>
+  </div>
+</div>
 
-      <section class="board" id="board">
-        {% for stage in stages %}
-        <div class="column" data-stage="{{ stage }}">
-          <div class="column-header">
-            <h3>{{ stage.replace("-", " ").title() }}</h3>
-            <span class="count" data-count="{{ stage }}">0</span>
-          </div>
-          <div class="column-body" data-dropzone="{{ stage }}"></div>
-        </div>
-        {% endfor %}
-      </section>
-    </main>
-
-    <div id="modal" class="modal" aria-hidden="true">
-      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-        <header>
-          <h3 id="modalTitle">Add a New Video</h3>
-          <button class="close" id="closeModal" aria-label="Close"></button>
-        </header>
-        <form id="addForm">
-          <label>
-            Title
-            <input type="text" name="title" placeholder="e.g. How I Plan a Shoot" required />
-          </label>
-          <label>
-            Stage
-            <select name="stage" required>
-              <option value="idea">Idea</option>
-              <option value="pre-production">Pre-production</option>
-              <option value="post-production">Post-production</option>
-              <option value="published">Published</option>
-            </select>
-          </label>
-          <footer class="modal-actions">
-            <button type="button" class="secondary" id="cancelModal">Cancel</button>
-            <button type="submit">Add Video</button>
-          </footer>
-        </form>
-      </div>
+<section class="board" id="board">
+  {% for stage in stages %}
+  <div class="column" data-stage="{{ stage }}">
+    <div class="column-header">
+      <h3>{{ stage.replace("-", " ").replace("_", " ").title() }}</h3>
+      <span class="count" data-count="{{ stage }}">0</span>
     </div>
-
-    <div id="toast" class="toast" aria-live="polite"></div>
-
-    <script src="/static/app.js"></script>
-  </body>
-</html>
+    <div class="column-body" data-dropzone="{{ stage }}"></div>
+  </div>
+  {% endfor %}
+</section>
+{% endblock %}

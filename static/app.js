@@ -1,209 +1,256 @@
-const stages = ["idea", "pre-production", "post-production", "published"];
+/* ── Helpers ───────────────────────────────────── */
+const $ = (s, p = document) => p.querySelector(s);
+const $$ = (s, p = document) => [...p.querySelectorAll(s)];
 
-const board = document.getElementById("board");
-const modal = document.getElementById("modal");
-const openModalBtn = document.getElementById("openModal");
-const closeModalBtn = document.getElementById("closeModal");
-const cancelModalBtn = document.getElementById("cancelModal");
-const addForm = document.getElementById("addForm");
-const toast = document.getElementById("toast");
-
-let currentVideos = [];
-let toastTimer = null;
-
-function showToast(message, isError = false) {
-  toast.textContent = message;
-  toast.style.borderColor = isError ? "#ff6b6b" : "#263241";
-  toast.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+function toast(msg, isError = false) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (isError ? ' error' : '');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = 'toast', 2500);
 }
 
-function openModal() {
-  modal.classList.add("active");
-  modal.setAttribute("aria-hidden", "false");
+async function api(url, opts = {}) {
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
 }
 
-function closeModal() {
-  modal.classList.remove("active");
-  modal.setAttribute("aria-hidden", "true");
-  addForm.reset();
+/* ── Drag & Drop (generic) ─────────────────────── */
+function initDragDrop(cardSelector, dropzoneSelector, onDrop) {
+  document.addEventListener('dragstart', e => {
+    const card = e.target.closest(cardSelector);
+    if (!card) return;
+    card.classList.add('dragging');
+    e.dataTransfer.setData('text/plain', card.dataset.id || card.dataset.title);
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  document.addEventListener('dragend', e => {
+    const card = e.target.closest(cardSelector);
+    if (card) card.classList.remove('dragging');
+    $$(dropzoneSelector).forEach(z => z.classList.remove('drag-over'));
+  });
+  document.addEventListener('dragover', e => {
+    const zone = e.target.closest(dropzoneSelector);
+    if (!zone) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    zone.classList.add('drag-over');
+  });
+  document.addEventListener('dragleave', e => {
+    const zone = e.target.closest(dropzoneSelector);
+    if (zone) zone.classList.remove('drag-over');
+  });
+  document.addEventListener('drop', e => {
+    const zone = e.target.closest(dropzoneSelector);
+    if (!zone) return;
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const id = e.dataTransfer.getData('text/plain');
+    const stage = zone.dataset.dropzone;
+    onDrop(id, stage);
+  });
 }
 
-async function fetchVideos() {
-  const response = await fetch("/api/videos");
-  if (!response.ok) {
-    throw new Error("Failed to load videos.");
+/* ── VIDEO PIPELINE PAGE ───────────────────────── */
+if ($('#board') && !$('#sponsorBoard')) {
+  let videos = [];
+
+  async function loadVideos() {
+    videos = await api('/api/videos');
+    renderVideos();
   }
-  return response.json();
-}
 
-function updateCounts(videos) {
-  const counts = Object.fromEntries(stages.map((stage) => [stage, 0]));
-  videos.forEach((video) => {
-    if (counts[video.stage] !== undefined) {
-      counts[video.stage] += 1;
-    }
-  });
-  stages.forEach((stage) => {
-    const countEl = document.querySelector(`[data-count='${stage}']`);
-    if (countEl) {
-      countEl.textContent = counts[stage];
-    }
-  });
-}
+  function renderVideos() {
+    $$('.column-body[data-dropzone]', $('#board')).forEach(zone => { zone.innerHTML = ''; });
+    const counts = {};
+    videos.forEach(v => {
+      counts[v.stage] = (counts[v.stage] || 0) + 1;
+      const zone = $(`[data-dropzone="${v.stage}"]`, $('#board'));
+      if (!zone) return;
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.draggable = true;
+      card.dataset.title = v.title;
+      card.dataset.id = v.id;
 
-function createCard(video) {
-  const card = document.createElement("article");
-  card.className = "card";
-  card.draggable = true;
-  card.dataset.title = video.title;
+      let meta = '';
+      if (v.views) meta += `<span><i data-lucide="eye"></i> ${Number(v.views).toLocaleString()}</span>`;
+      if (v.publish_date) meta += `<span><i data-lucide="calendar"></i> ${v.publish_date}</span>`;
+      if (v.youtube_video_id) meta += `<span><i data-lucide="youtube"></i></span>`;
 
-  const title = document.createElement("div");
-  title.className = "card-title";
-  title.textContent = video.title;
+      card.innerHTML = `
+        <div class="card-title">${esc(v.title)}</div>
+        ${meta ? `<div class="card-meta">${meta}</div>` : ''}
+        <div class="card-actions">
+          <button class="card-action-btn delete-btn" title="Delete"><i data-lucide="trash-2"></i></button>
+        </div>
+      `;
+      zone.appendChild(card);
+    });
+    $$('[data-count]', $('#board')).forEach(el => {
+      el.textContent = counts[el.dataset.count] || 0;
+    });
+    lucide.createIcons();
+  }
 
-  const actions = document.createElement("div");
-  actions.className = "card-actions";
-  actions.innerHTML = `<span>${video.stage.replace(/-/g, " ")}</span>`;
-
-  const del = document.createElement("button");
-  del.className = "delete-btn";
-  del.type = "button";
-  del.textContent = "Delete";
-  del.addEventListener("click", async (event) => {
-    event.stopPropagation();
-    const confirmed = window.confirm(`Delete "${video.title}"?`);
-    if (!confirmed) return;
+  initDragDrop('.card', '#board [data-dropzone]', async (title, stage) => {
     try {
-      const res = await fetch(`/api/videos/${encodeURIComponent(video.title)}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
-        throw new Error(payload.error || "Delete failed.");
+      await api(`/api/videos/${encodeURIComponent(title)}`, { method: 'PUT', body: { stage } });
+      const v = videos.find(x => x.title === title);
+      if (v) v.stage = stage;
+      renderVideos();
+    } catch (e) { toast(e.message, true); }
+  });
+
+  document.addEventListener('click', async e => {
+    const btn = e.target.closest('.delete-btn');
+    if (!btn) return;
+    const card = btn.closest('.card');
+    const title = card.dataset.title;
+    try {
+      await api(`/api/videos/${encodeURIComponent(title)}`, { method: 'DELETE' });
+      videos = videos.filter(v => v.title !== title);
+      renderVideos();
+      toast('Video deleted');
+    } catch (e) { toast(e.message, true); }
+  });
+
+  loadVideos();
+}
+
+/* ── SPONSOR CRM PAGE ──────────────────────────── */
+if ($('#sponsorBoard')) {
+  let sponsors = [];
+  const modal = $('#sponsorModal');
+  const form = $('#sponsorForm');
+
+  async function loadSponsors() {
+    sponsors = await api('/api/sponsors');
+    renderSponsors();
+  }
+
+  function paymentStatus(dueDateStr) {
+    if (!dueDateStr) return '';
+    const due = new Date(dueDateStr);
+    const now = new Date();
+    const diff = (due - now) / (1000 * 60 * 60 * 24);
+    if (diff < 0) return 'payment-overdue';
+    if (diff < 7) return 'payment-due-soon';
+    return '';
+  }
+
+  function renderSponsors() {
+    $$('.column-body[data-dropzone]', $('#sponsorBoard')).forEach(z => { z.innerHTML = ''; });
+    const counts = {};
+    sponsors.forEach(s => {
+      counts[s.status] = (counts[s.status] || 0) + 1;
+      const zone = $(`[data-dropzone="${s.status}"]`, $('#sponsorBoard'));
+      if (!zone) return;
+      const card = document.createElement('div');
+      card.className = 'sponsor-card';
+      card.draggable = true;
+      card.dataset.id = String(s.id);
+
+      const pStatus = paymentStatus(s.payment_due_date);
+      let metaHtml = '';
+      if (s.contact_email) metaHtml += `<div class="sponsor-meta-row"><i data-lucide="mail"></i> ${esc(s.contact_email)}</div>`;
+      if (s.payment_due_date) metaHtml += `<div class="sponsor-meta-row ${pStatus}"><i data-lucide="clock"></i> Due: ${s.payment_due_date}</div>`;
+
+      card.innerHTML = `
+        <div class="sponsor-brand">${esc(s.brand_name)}</div>
+        ${s.deal_value ? `<div class="sponsor-value">$${Number(s.deal_value).toLocaleString()}</div>` : ''}
+        ${metaHtml ? `<div class="sponsor-meta">${metaHtml}</div>` : ''}
+      `;
+      card.addEventListener('click', () => openSponsorModal(s));
+      zone.appendChild(card);
+    });
+    $$('[data-count]', $('#sponsorBoard')).forEach(el => {
+      el.textContent = counts[el.dataset.count] || 0;
+    });
+    lucide.createIcons();
+  }
+
+  function openSponsorModal(s = null) {
+    form.reset();
+    if (s) {
+      $('#sponsorModalTitle').textContent = 'Edit Sponsor Deal';
+      form.elements.id.value = s.id;
+      form.elements.brand_name.value = s.brand_name || '';
+      form.elements.contact_email.value = s.contact_email || '';
+      form.elements.deal_value.value = s.deal_value || '';
+      form.elements.status.value = s.status || 'inquiry';
+      form.elements.payment_due_date.value = s.payment_due_date || '';
+      form.elements.notes.value = s.notes || '';
+    } else {
+      $('#sponsorModalTitle').textContent = 'New Sponsor Deal';
+      form.elements.id.value = '';
+    }
+    modal.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeModal() { modal.setAttribute('aria-hidden', 'true'); }
+
+  $('#addSponsorBtn').addEventListener('click', () => openSponsorModal());
+  $('#closeSponsorModal').addEventListener('click', closeModal);
+  $('#cancelSponsorModal').addEventListener('click', closeModal);
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const body = Object.fromEntries(fd);
+    const id = body.id;
+    delete body.id;
+    try {
+      if (id) {
+        await api(`/api/sponsors/${id}`, { method: 'PUT', body });
+      } else {
+        await api('/api/sponsors', { method: 'POST', body });
       }
-      await reloadBoard();
-      showToast("Video deleted.");
-    } catch (error) {
-      showToast(error.message, true);
+      closeModal();
+      await loadSponsors();
+      toast(id ? 'Sponsor updated' : 'Sponsor added');
+    } catch (e) { toast(e.message, true); }
+  });
+
+  initDragDrop('.sponsor-card', '#sponsorBoard [data-dropzone]', async (id, stage) => {
+    try {
+      await api(`/api/sponsors/${id}`, { method: 'PUT', body: { status: stage } });
+      const s = sponsors.find(x => String(x.id) === id);
+      if (s) s.status = stage;
+      renderSponsors();
+    } catch (e) { toast(e.message, true); }
+  });
+
+  loadSponsors();
+}
+
+/* ── YouTube Sync Button ───────────────────────── */
+const syncBtn = $('#syncYouTube');
+if (syncBtn) {
+  syncBtn.addEventListener('click', async () => {
+    syncBtn.classList.add('syncing');
+    try {
+      const data = await api('/api/videos/sync', { method: 'POST' });
+      toast(`Synced ${data.imported || 0} new videos`);
+      // Reload if on video page
+      if ($('#board') && !$('#sponsorBoard')) location.reload();
+    } catch (e) {
+      toast(e.message, true);
+    } finally {
+      syncBtn.classList.remove('syncing');
     }
   });
-
-  actions.appendChild(del);
-  card.appendChild(title);
-  card.appendChild(actions);
-
-  card.addEventListener("dragstart", (event) => {
-    card.classList.add("dragging");
-    event.dataTransfer.setData("text/plain", video.title);
-  });
-
-  card.addEventListener("dragend", () => {
-    card.classList.remove("dragging");
-  });
-
-  return card;
 }
 
-function renderBoard(videos) {
-  currentVideos = videos;
-  stages.forEach((stage) => {
-    const column = board.querySelector(`[data-dropzone='${stage}']`);
-    if (!column) return;
-    column.innerHTML = "";
-    videos
-      .filter((video) => video.stage === stage)
-      .forEach((video) => column.appendChild(createCard(video)));
-  });
-  updateCounts(videos);
+/* ── Util ──────────────────────────────────────── */
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
 }
-
-async function reloadBoard() {
-  const videos = await fetchVideos();
-  renderBoard(videos);
-}
-
-async function moveVideo(title, stage) {
-  const res = await fetch(`/api/videos/${encodeURIComponent(title)}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ stage }),
-  });
-  if (!res.ok) {
-    const payload = await res.json().catch(() => ({}));
-    throw new Error(payload.error || "Update failed.");
-  }
-  await reloadBoard();
-}
-
-function setupDropzones() {
-  const zones = document.querySelectorAll("[data-dropzone]");
-  zones.forEach((zone) => {
-    zone.addEventListener("dragover", (event) => {
-      event.preventDefault();
-      zone.classList.add("drag-over");
-    });
-    zone.addEventListener("dragleave", () => zone.classList.remove("drag-over"));
-    zone.addEventListener("drop", async (event) => {
-      event.preventDefault();
-      zone.classList.remove("drag-over");
-      const title = event.dataTransfer.getData("text/plain");
-      const stage = zone.dataset.dropzone;
-      if (!title || !stage) return;
-      const video = currentVideos.find((item) => item.title === title);
-      if (video && video.stage === stage) return;
-      try {
-        await moveVideo(title, stage);
-        showToast("Stage updated.");
-      } catch (error) {
-        showToast(error.message, true);
-      }
-    });
-  });
-}
-
-openModalBtn.addEventListener("click", openModal);
-closeModalBtn.addEventListener("click", closeModal);
-cancelModalBtn.addEventListener("click", closeModal);
-modal.addEventListener("click", (event) => {
-  if (event.target === modal) {
-    closeModal();
-  }
-});
-
-addForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const formData = new FormData(addForm);
-  const title = String(formData.get("title") || "").trim();
-  const stage = String(formData.get("stage") || "").trim();
-  if (!title) {
-    showToast("Title is required.", true);
-    return;
-  }
-  try {
-    const res = await fetch("/api/videos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, stage }),
-    });
-    if (!res.ok) {
-      const payload = await res.json().catch(() => ({}));
-      throw new Error(payload.error || "Add failed.");
-    }
-    closeModal();
-    await reloadBoard();
-    showToast("Video added.");
-  } catch (error) {
-    showToast(error.message, true);
-  }
-});
-
-window.addEventListener("load", async () => {
-  setupDropzones();
-  try {
-    await reloadBoard();
-  } catch (error) {
-    showToast(error.message, true);
-  }
-});

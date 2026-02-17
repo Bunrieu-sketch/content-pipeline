@@ -1,0 +1,27 @@
+# Database files (contain live data, don't commit)
+dashboard.db
+*.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+env/
+
+# Environment variables
+.env
+
+# Credentials
+service_account.json
+*.json.key
+*.pem
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.log
+*.tmp
