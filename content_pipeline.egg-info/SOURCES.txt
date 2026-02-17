@@ -1,8 +1,0 @@
-pipeline.py
-setup.py
-content_pipeline.egg-info/PKG-INFO
-content_pipeline.egg-info/SOURCES.txt
-content_pipeline.egg-info/dependency_links.txt
-content_pipeline.egg-info/entry_points.txt
-content_pipeline.egg-info/requires.txt
-content_pipeline.egg-info/top_level.txt

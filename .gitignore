@@ -1,17 +1,26 @@
 # Database files (contain live data, don't commit)
 dashboard.db
 *.db
+*.db-shm
+*.db-wal
+
+# Node.js / Next.js
+node_modules/
+.next/
+out/
+dist/
 
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
+*$py@.class
 *.so
 venv/
 env/
 
 # Environment variables
 .env
+.env*.local
 
 # Credentials
 service_account.json
@@ -21,7 +30,13 @@ service_account.json
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
 
 # Temporary files
 *.log
 *.tmp
+
+# OS
+.DS_Store
+Thumbs.db
