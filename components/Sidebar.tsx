@@ -9,19 +9,24 @@ const links = [
   { href: '/crm-guide', label: 'CRM Guide', icon: BookOpen },
 ];
 
-export function Sidebar() {
+export function Topbar() {
   const pathname = usePathname();
   return (
-    <nav className="sidebar">
-      <h2>📹 Sponsor CRM</h2>
-      {links.map(({ href, label, icon: Icon }) => {
-        const isActive = href === '/' ? pathname === '/' : pathname.startsWith(href);
-        return (
-          <Link key={href} href={href} className={isActive ? 'active' : ''}>
-            <Icon size={16} /> {label}
-          </Link>
-        );
-      })}
+    <nav className="topbar">
+      <h2>💰 Sponsor CRM</h2>
+      <div className="topbar-links">
+        {links.map(({ href, label, icon: Icon }) => {
+          const isActive = href === '/' ? pathname === '/' : pathname.startsWith(href);
+          return (
+            <Link key={href} href={href} className={`topbar-link ${isActive ? 'active' : ''}`}>
+              <Icon size={14} /> {label}
+            </Link>
+          );
+        })}
+      </div>
     </nav>
   );
 }
+
+// Keep old export name for compatibility
+export const Sidebar = Topbar;
