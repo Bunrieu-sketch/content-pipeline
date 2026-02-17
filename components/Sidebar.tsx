@@ -1,11 +1,10 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Video, Handshake, BookOpen } from 'lucide-react';
+import { LayoutDashboard, Handshake, BookOpen } from 'lucide-react';
 
 const links = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/videos', label: 'Videos', icon: Video },
   { href: '/sponsors-v2', label: 'Sponsors', icon: Handshake },
   { href: '/crm-guide', label: 'CRM Guide', icon: BookOpen },
 ];
