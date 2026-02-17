@@ -46,6 +46,11 @@ def sponsors_page():
     return render_template("sponsors.html", stages=SPONSOR_STAGES)
 
 
+@app.route("/crm-guide")
+def crm_guide_page():
+    return render_template("crm_guide.html")
+
+
 # ── Videos API ──────────────────────────────────
 
 @app.route("/api/videos", methods=["GET"])
@@ -202,7 +207,9 @@ def update_sponsor(sponsor_id: int):
 
     # Update only provided fields
     fields = {}
-    for col in ["brand_name", "contact_email", "deal_value", "status", "payment_due_date", "notes"]:
+    for col in ["brand_name", "contact_email", "deal_value", "deal_type", "status", "payment_due_date", "notes",
+                 "contact_name", "content_phase", "script_due", "brand_approval_deadline", "live_date",
+                 "next_action", "next_action_due", "deliverables", "last_contact_date"]:
         if col in p:
             fields[col] = p[col]
 

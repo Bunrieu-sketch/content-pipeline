@@ -84,7 +84,10 @@ if ($('#board') && !$('#sponsorBoard')) {
       if (v.publish_date) meta += `<span><i data-lucide="calendar"></i> ${v.publish_date}</span>`;
       if (v.youtube_video_id) meta += `<span><i data-lucide="youtube"></i></span>`;
 
+      const thumbHtml = v.thumbnail_path ? `<img class="card-thumb" src="/static/thumbnails/${esc(v.thumbnail_path)}" alt="" />` : '';
+
       card.innerHTML = `
+        ${thumbHtml}
         <div class="card-title">${esc(v.title)}</div>
         ${meta ? `<div class="card-meta">${meta}</div>` : ''}
         <div class="card-actions">
@@ -145,6 +148,29 @@ if ($('#sponsorBoard')) {
     return '';
   }
 
+  function sponsorCardIndicator(s) {
+    // Urgent: overdue payment or overdue next_action
+    const now = new Date().toISOString().slice(0,10);
+    if (s.payment_due_date && s.payment_due_date < now && s.status !== 'paid') return 'indicator-urgent';
+    if (s.next_action_due && s.next_action_due < now) return 'indicator-urgent';
+    // Stale: no contact in 7+ days
+    if (s.last_contact_date) {
+      const diff = (new Date() - new Date(s.last_contact_date)) / 86400000;
+      if (diff > 7) return 'indicator-stale';
+    }
+    // Action needed: has next_action with upcoming due
+    if (s.next_action && s.next_action_due) {
+      const diff = (new Date(s.next_action_due) - new Date()) / 86400000;
+      if (diff >= 0 && diff <= 3) return 'indicator-action';
+    }
+    return '';
+  }
+
+  function firstName(name) {
+    if (!name) return '';
+    return name.trim().split(/\s+/)[0];
+  }
+
   function renderSponsors() {
     $$('.column-body[data-dropzone]', $('#sponsorBoard')).forEach(z => { z.innerHTML = ''; });
     const counts = {};
@@ -153,19 +179,50 @@ if ($('#sponsorBoard')) {
       const zone = $(`[data-dropzone="${s.status}"]`, $('#sponsorBoard'));
       if (!zone) return;
       const card = document.createElement('div');
-      card.className = 'sponsor-card';
+      const indicator = sponsorCardIndicator(s);
+      card.className = 'sponsor-card' + (indicator ? ' ' + indicator : '');
       card.draggable = true;
       card.dataset.id = String(s.id);
 
-      const pStatus = paymentStatus(s.payment_due_date);
-      let metaHtml = '';
-      if (s.contact_email) metaHtml += `<div class="sponsor-meta-row"><i data-lucide="mail"></i> ${esc(s.contact_email)}</div>`;
-      if (s.payment_due_date) metaHtml += `<div class="sponsor-meta-row ${pStatus}"><i data-lucide="clock"></i> Due: ${s.payment_due_date}</div>`;
+      // Deal value + type
+      const dealStr = s.deal_value ? `$${Number(s.deal_value).toLocaleString()} <span class="deal-type-badge">${s.deal_type || 'flat_rate'}</span>` : '';
+
+      // Contact first name
+      const contact = firstName(s.contact_name);
+
+      // Content phase badge
+      const phaseBadge = (s.status === 'content' && s.content_phase) ? `<span class="content-phase-badge">${esc(s.content_phase)}</span>` : '';
+
+      // Key dates
+      let datesHtml = '';
+      const dateFields = [
+        { label: 'Script', val: s.script_due },
+        { label: 'Approval', val: s.brand_approval_deadline },
+        { label: 'Live', val: s.live_date },
+        { label: 'Payment', val: s.payment_due_date },
+      ];
+      const activeDates = dateFields.filter(d => d.val);
+      if (activeDates.length) {
+        datesHtml = '<div class="sponsor-dates">' + activeDates.map(d => `<span class="date-chip"><b>${d.label}:</b> ${d.val}</span>`).join('') + '</div>';
+      }
+
+      // Next action
+      const actionText = s.next_action ? (s.next_action.length > 80 ? s.next_action.slice(0,80) + '…' : s.next_action) : '';
+      const actionHtml = s.next_action ? `<div class="sponsor-action"><i data-lucide="arrow-right-circle"></i> ${esc(actionText)}${s.next_action_due ? ` <span class="action-due">by ${s.next_action_due}</span>` : ''}</div>` : '';
+
+      // Deliverables
+      const deliv = s.deliverables ? `<div class="sponsor-deliverables">${esc(s.deliverables.length > 60 ? s.deliverables.slice(0,60) + '…' : s.deliverables)}</div>` : '';
 
       card.innerHTML = `
-        <div class="sponsor-brand">${esc(s.brand_name)}</div>
-        ${s.deal_value ? `<div class="sponsor-value">$${Number(s.deal_value).toLocaleString()}</div>` : ''}
-        ${metaHtml ? `<div class="sponsor-meta">${metaHtml}</div>` : ''}
+        <div class="sponsor-card-header">
+          <div class="sponsor-brand">${esc(s.brand_name)}</div>
+          ${contact ? `<span class="sponsor-contact">${esc(contact)}</span>` : ''}
+        </div>
+        ${dealStr ? `<div class="sponsor-value">${dealStr}</div>` : ''}
+        ${phaseBadge}
+        ${datesHtml}
+        ${actionHtml}
+        ${deliv}
       `;
       card.addEventListener('click', () => openSponsorModal(s));
       zone.appendChild(card);
