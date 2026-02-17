@@ -1,0 +1,217 @@
+{
+  "extracted_date": "2026-02-17",
+  "source": "Gmail inbox - montythehandler@gmail.com",
+  "deals": [
+    {
+      "brand": "Speak",
+      "deal_type": "flat_rate",
+      "deal_value_gross": null,
+      "deal_value_net": null,
+      "stage": "initial_discussion",
+      "agency_contact": "Ben Stewart",
+      "agency_email": "benny.s@lighthouseagents.com",
+      "dates": {
+        "offer": "2026-02-16",
+        "contract": "",
+        "script_due": "",
+        "publish": ""
+      },
+      "next_action": "Waiting for Ben to provide more details on the offer (dedicated vs integration, title requirements, rate). Andrew expressed interest, mentioned Korea trip in April/May.",
+      "notes": "Speak is an AI-native language learning app. Looking for either a dedicated video or standard integration with brand name in video title. Andrew is learning Indonesian (not offered by Speak). Korea trip planned April/May could be relevant.",
+      "attachments": [],
+      "email_summary": "Ben pitched Speak app sponsorship. Andrew replied asking for more detail on the offer structure (dedicated vs integration), title requirements, and rate. Mentioned a Korea trip in April/May. No rate or contract discussed yet."
+    },
+    {
+      "brand": "Snakzy",
+      "deal_type": "flat_rate",
+      "deal_value_gross": 3800,
+      "deal_value_net": 3040,
+      "stage": "accepted_scheduling",
+      "agency_contact": "Ben Stewart",
+      "agency_email": "benny.s@lighthouseagents.com",
+      "dates": {
+        "offer": "2026-02-13",
+        "contract": "",
+        "script_due": "",
+        "publish": "2026-03-07 or 2026-03-14"
+      },
+      "next_action": "Ben confirming with Snakzy on March 7th or 14th publish date. Waiting for next steps from Ben.",
+      "notes": "Format: 1-2 minutes in the first 5 minutes of video. Andrew suggested March 7 (Eating Sea Worms of Lombok) or March 14 (Bloodiest Festival in Indonesia). Both dates work for Snakzy.",
+      "attachments": [],
+      "email_summary": "Ben offered $3,800 gross/$3,040 net for a 1-2 min integration in first 5 mins. Andrew accepted and proposed March 7 or 14. Ben confirmed both work and said he'd get back with next steps."
+    },
+    {
+      "brand": "LARQ",
+      "deal_type": "flat_rate",
+      "deal_value_gross": 4500,
+      "deal_value_net": 3600,
+      "stage": "accepted_awaiting_contract",
+      "agency_contact": "Tom Melody",
+      "agency_email": "tom.m@lighthouseagents.com",
+      "secondary_contact": "Ben Stewart",
+      "secondary_email": "benny.s@lighthouseagents.com",
+      "dates": {
+        "offer": "2026-02-13",
+        "contract": "",
+        "script_due": "",
+        "publish": "Late March/Early April 2026"
+      },
+      "next_action": "Tom confirming late March/early April slot. Sending contract. Product shipping to US address.",
+      "notes": "Brand: livelarq.com (water bottles). Format: 60 seconds. Shipping address: Mai Minh Hien, 5442 Hayter Ave, Lakewood, CA 90712, Phone: 5628961083.",
+      "attachments": [],
+      "email_summary": "Tom offered $4,500 gross/$3,600 net for 60-second integration. Andrew accepted and requested late March/early April. Tom confirmed and said he'd send the contract. Product to be shipped to CA address."
+    },
+    {
+      "brand": "FarmKind",
+      "deal_type": "cpm",
+      "deal_value_gross": 7000,
+      "deal_value_net": 5600,
+      "stage": "completed_invoicing",
+      "agency_contact": "Tom Melody",
+      "agency_email": "tom.m@lighthouseagents.com",
+      "secondary_contact": "Joaquin Barberis",
+      "secondary_email": "joaquin@lighthouseagents.com",
+      "dates": {
+        "offer": "2025-10-09",
+        "contract": "2025-10-20",
+        "script_due": "",
+        "publish": "2025-12-06"
+      },
+      "next_action": "Payment being processed. Corrected invoice submitted ($1,528.26 based on CPM). Deal essentially complete.",
+      "notes": "Rate: $1,400 fixed + $17.5 CPM with $7,000 gross cap ($5,600 net cap). Format: 60 seconds. Published Dec 6, 2025. Live link: https://www.youtube.com/watch?v=l73lHMYiO6k&t=311s. Invoice corrected to $1,528.26 after 30-day view count. Non-profit donation platform for farmed animal welfare. Xuan Le (xuan@fraser.vn) handled production coordination.",
+      "attachments": [
+        "Screenshot 2025-10-07 at 9.51.47 AM.png",
+        "Screenshot 2025-10-07 at 9.50.43 AM.png",
+        "Screenshot 2025-10-07 at 9.51.10 AM.png",
+        "1 more attachment (screenshot)"
+      ],
+      "email_summary": "Long completed deal chain. Original offer Oct 2025 at $1,400 fixed + $17.5 CPM (350k cap). Video published Dec 6, 2025. After 30-day count, invoiced at $1,528.26. Corrected invoice submitted and accepted. Payment being processed."
+    },
+    {
+      "brand": "Saily",
+      "deal_type": "flat_rate",
+      "deal_value_gross": null,
+      "deal_value_net": null,
+      "stage": "completed_awaiting_invoice",
+      "agency_contact": "Ben Stewart",
+      "agency_email": "benny.s@lighthouseagents.com",
+      "dates": {
+        "offer": "2026-01-10",
+        "contract": "2026-01-10",
+        "script_due": "",
+        "publish": "2026-02-01"
+      },
+      "next_action": "Ben to follow up with invoice when time comes. Video already live.",
+      "notes": "eSIM product. Video went live: https://www.youtube.com/watch?v=57qQ70LtnTU. Promo link: https://saily.com/andrewfraser. Promo code: andrewfraser. Ben noticed it went live before being notified. Agreement was attached in earlier email (not visible in forwarded chain). Rate not explicitly stated in visible chain.",
+      "attachments": [
+        "YouTube link: Farming China's Banned Meat - The Giant Bamboo Rat"
+      ],
+      "email_summary": "Saily (eSIM) deal negotiated in January 2026. Agreement shared, script approved, video went live Feb 1. Ben spotted it live and will handle invoicing. Andrew apologized for not notifying about go-live."
+    },
+    {
+      "brand": "Hungry Minds",
+      "deal_type": "flat_rate",
+      "deal_value_gross": 3000,
+      "deal_value_net": null,
+      "stage": "accepted_scheduling",
+      "agency_contact": "Ben Stewart",
+      "agency_email": "benny.s@lighthouseagents.com",
+      "dates": {
+        "offer": "2026-02-11",
+        "contract": "",
+        "script_due": "",
+        "publish": "March or Early April 2026"
+      },
+      "next_action": "Ben passing shipping address to Hungry Minds. Awaiting product delivery and further coordination.",
+      "notes": "Format: 60 seconds. 'They won't budge on the rate.' Andrew interested - good fit for studio shooting. Shipping address: Mai Minh Hien, 5442 Hayter Ave, Lakewood, CA 90712, Phone: (562) 896-1083. Ben said the book is amazing.",
+      "attachments": [],
+      "email_summary": "Ben offered $3,000 gross for 60-second integration. Andrew accepted, suggested March or early April. Ben confirmed dates work and is passing shipping address to Hungry Minds."
+    },
+    {
+      "brand": "Simify",
+      "deal_type": "flat_rate",
+      "deal_value_gross": 3500,
+      "deal_value_net": null,
+      "stage": "script_approved_awaiting_publish",
+      "agency_contact": "Ben Stewart",
+      "agency_email": "benny.s@lighthouseagents.com",
+      "dates": {
+        "offer": "2026-02-06",
+        "contract": "2026-02-06",
+        "script_due": "2026-02-07",
+        "publish": "Feb 21 - Mar 14 2026"
+      },
+      "next_action": "Andrew to update script (remove 'unlimited', keep 'data plans starting from under two dollars a day') and publish in one of his upcoming episodes.",
+      "notes": "Format: 60-second YouTube midroll integration. Agreement link: https://docuseal.com/s/zvotY4Dmc5CTWK. Creative brief: https://www.notion.so/simify/Simify-YouTube-Brief-27e1e671c58d8093a96ded167f9c6e9e. Collab example: https://www.youtube.com/watch?v=CkltdgGtNx4&t=290s. Script approved with one change: remove 'unlimited'. Possible episodes: Bangladesh (Feb 21/28) or Indonesia (Mar 7/14).",
+      "attachments": [
+        "Screenshot 2026-02-13 at 12.39.49 pm.png (script change screenshot)"
+      ],
+      "email_summary": "Ben offered $3,500 gross for 60-sec midroll. Andrew accepted, submitted script Feb 7. Script approved Feb 12 with one late change on Feb 13: remove 'unlimited' from data plans description. Andrew confirmed he'll make the change."
+    },
+    {
+      "brand": "Babbel",
+      "deal_type": "flat_rate",
+      "deal_value_gross": 3000,
+      "deal_value_net": null,
+      "stage": "accepted_awaiting_brief",
+      "agency_contact": "Ben Stewart",
+      "agency_email": "benny.s@lighthouseagents.com",
+      "dates": {
+        "offer": "2025-12-16",
+        "contract": "2026-01-19",
+        "script_due": "",
+        "publish": ""
+      },
+      "next_action": "Ben to send updated brief with new CTA. Andrew requested brief before Feb 4 shoot departure.",
+      "notes": "Rate: $3,000 with 75k view guarantee. Babbel subscription code: XEE1S73. Agreement was attached for signing via Influencer Funds. Draft must be submitted 2 days before go-live. Ben still waiting for most recent brief (similar to previous but different CTA). Andrew heading on shoot, wanted brief before departure.",
+      "attachments": [
+        "YT TPs Babbel [BLACK FRIDAY 2025] (2) (1).pdf"
+      ],
+      "email_summary": "Babbel deal negotiated since Dec 2025 at $3,000 gross with 75k VG. Agreement shared Jan 19 and approved by Andrew. Ben waiting for updated brief from Babbel (new CTA). Andrew asked for brief before his Feb 4 shoot departure."
+    },
+    {
+      "brand": "Elithair",
+      "deal_type": "flat_rate",
+      "deal_value_gross": null,
+      "deal_value_net": null,
+      "stage": "approved_ready_to_publish",
+      "agency_contact": "Ben Stewart",
+      "agency_email": "benny.s@lighthouseagents.com",
+      "dates": {
+        "offer": "2025-10-15",
+        "contract": "",
+        "script_due": "2025-10-15",
+        "publish": ""
+      },
+      "next_action": "Andrew to publish video and pin affiliate link (https://elt.hair/andrew) in comments.",
+      "notes": "This is the 2nd ad for Elithair (hair transplant clinic). Long review process with multiple rounds of changes. Affiliate link: https://elt.hair/andrew. CTA: Book a free consultation, €200 off with code 'Andrew Fraser'. Xuan Le (xuan@fraser.vn) handled production. Multiple draft review links shared. Final approval given Feb 11, 2026. Ben's contact at Elithair had surgery causing delays.",
+      "attachments": [
+        "IMG_4005.png",
+        "Screenshot 2026-02-02 at 11.23.37 am.png",
+        "ELITHAIR SCRIPT (Google Doc)"
+      ],
+      "email_summary": "2nd Elithair ad - long chain from Oct 2025. Script submitted, multiple rounds of video review with clips removed per brand request. Delays due to Elithair contact being unwell/surgery. Final approval given Feb 11, 2026. Ready to go live with affiliate link pinned in comments."
+    },
+    {
+      "brand": "Fitville Shoes",
+      "deal_type": "cpm",
+      "deal_value_gross": 4500,
+      "deal_value_net": null,
+      "stage": "script_submitted_awaiting_final_approval",
+      "agency_contact": "Ben Stewart",
+      "agency_email": "benny.s@lighthouseagents.com",
+      "secondary_contact": "Darren",
+      "secondary_email": "darren@lighthouseagents.com",
+      "dates": {
+        "offer": "2026-01-15",
+        "contract": "2026-02-03",
+        "script_due": "2026-02-11",
+        "publish": "5-6 weeks after receiving shoes"
+      },
+      "next_action": "Andrew to change 'Germany' to 'Europe' in script. Need to register on Impact for commission tracking (https://app.impact.com/advertiser-advertiser-info/Thefitville.brand) and send Impact ID to Ben.",
+      "notes": "Rate: $30 CPM with $4,500 cap + 10% commission (no limits). Format: 60-90 second YouTube integration. Time to count: 4 weeks after post. Discount code: Andrew30 (30% off). Links: US/CA thefitville.com, UK thefitville.uk, DE thefitville.de. Shoes ordered: Men's Rebound Neo V3 (White/Gray) & Men's Cloud Wanderer Slip-On V21 (Blue/Powder Blue), both US 11. Shipped to CA address. Andrew was shooting in Sumba when shoes arrived. Agreement attached in earlier email.",
+      "attachments": [],
+      "email_summary": "Fitville offered $30 CPM ($4,500 cap) + 10% commission for 60-90s integration. Andrew accepted Jan 15. Shoes shipped (2 pairs). Script submitted Feb 11. One change requested: 'Germany' → 'Europe'. Also need to set up Impact account for commission tracking."
+    }
+  ]
+}
